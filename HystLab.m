@@ -2578,6 +2578,26 @@ catch
 end
 
 
+function MB_Open_Paper_Callback(hObject, eventdata, handles)
+% hObject    handle to MB_Open_Manual (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get the current path of the main m-file
+S = mfilename('fullpath');
+name_len = length(mfilename());
+MyPath = S(1:end-name_len);
+
+file_name = 'Paterson et al., 2018, Measuring, Processing, and Analyzing Hysteresis Data.pdf';
+file_path = strcat(MyPath, './Documents/', file_name);
+
+try
+    open(file_path);
+catch
+    warndlg([file_name, ' not found.'], 'Paper Not Found');
+end
+
+
 % --------------------------------------------------------------------
 function MB_About_Callback(hObject, eventdata, handles)
 % hObject    handle to MB_About (see GCBO)
