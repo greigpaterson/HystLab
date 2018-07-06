@@ -1602,13 +1602,26 @@ end
 
 
 if handles.Data_Loaded == 0
-    % No data loaded so do nothing
+    % No data loaded so reset and return
+    set(handles.Trim_Field_Lim, 'Value', Old_val, 'String', num2str(Old_val) );
     return;
 end
 
-% Call the ReFit function and update handles structure
-handles = ReFit_Data(handles);
-guidata(hObject, handles);
+% Check there are enough data to process
+Trimmed_Fields = handles.Current_Raw_Loop(abs(handles.Current_Raw_Loop(:,1)) < str2double(get(hObject,'String') ),1);
+Max_field = 0.9* max(abs(Trimmed_Fields));
+
+if sum(abs(Trimmed_Fields) > Max_field)/2 < 4
+    MSG = ['Trimming these fields will leave too few data at ',...
+    'high-fields for adequate high-field slope analysis. Please lower the field.'];
+    warndlg(MSG, 'Insufficient data')
+
+    set(handles.Trim_Field_Lim, 'Value', Old_val, 'String', num2str(Old_val) );
+else
+    % Call the ReFit function and update handles structure
+    handles = ReFit_Data(handles);
+    guidata(hObject, handles);
+end
 
 
 % --- Executes during object creation, after setting all properties.

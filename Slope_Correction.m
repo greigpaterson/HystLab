@@ -383,7 +383,15 @@ switch Saturation_Flag
             % Loop is closed, but we cannot reject linearity for at least one part
             % Apply correction to the lowest field with closure where we cannot reject linearity
             
-            Min_Ind = find(Logic_Inds(:,1) ==1 & (Logic_Inds(:,2) == 1 | Logic_Inds(:,3) == 1), 1, 'first');
+            Min_Ind = find(Logic_Inds(:,1) == 1 & (Logic_Inds(:,2) == 1 | Logic_Inds(:,3) == 1), 1, 'first');
+            
+            % For noisy data the indices of the logic array (closed,
+            % linear, linear) don't match up, yield an empty Min_Ind
+            % Simply take the lowest field that supports closure
+            if isempty(Min_Ind)
+                Min_Ind = find(Logic_Inds(:,1) == 1, 1, 'first');
+            end
+            
             Saturation_Field = Percentages(Min_Ind) * Max_Field;
             
             % Get the high field data
