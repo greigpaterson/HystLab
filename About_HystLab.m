@@ -74,7 +74,7 @@ set(handles.txt_Title, 'string', ['HystLab v' Version]);
 set(handles.txt_Date, 'string', Date);
 set(handles.txt_MSG, 'string',...
     'Thank you for using HystLab. If you found it useful and you use it in your work, we would be very grateful if you cited the following reference: ');
-set(handles.txt_Ref, 'string', 'Paterson et al., Measuring, processing, and analyzing hysteresis data (201X), Journal, Vol., pp, doi: ');
+set(handles.txt_Ref, 'string', 'Paterson, G. A., Zhao, X., Jackson, M., & Heslop, D. (2018). Measuring, processing, and analyzing hysteresis data. Geochemistry, Geophysics, Geosystems, 19. doi: 10.1029/2018GC007620');
 set(handles.txt_URL, 'string', [{'The latest version of HystLab is avaiable at:'}, {'https://github.com/greigpaterson/HystLab'}]);
 
 
