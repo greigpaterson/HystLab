@@ -19,6 +19,12 @@ if ~isequal(size(Names, 1), size(Masses,1), size(Stats,1), size(Params,1))
     error('Save_HystLab_Stats:Input', 'Inconsistent number of specimens in the input data.');
 end
 
+
+if sum(cellfun(@iscell, Names)) == length(Names)
+%     keyboard
+    Names = [Names{:}]';
+end
+
 % Define the stat names
 Stat_Names = [{'H0'}; {'M0'}; {'Q'}; {'Qf'}; {'Ms'}; {'Mrs'}; {'Bc'}; {'Brh'}; {'Bih'};...
     {'Xhf'}; {'X0'}; {'Shape'}; {'C_err'}; {'Nfit'}; {'AS_alpha'}; {'AS_beta'};...
