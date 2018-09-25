@@ -60,8 +60,8 @@ Ver = ver('MATLAB');
 handles.Version = str2double(Ver.Version);
 
 % TODO - Update version number and date
-handles.HystLab_Version = '1.0.0';
-handles.HystLab_Date = 'July, 2018';
+handles.HystLab_Version = '1.0.1';
+handles.HystLab_Date = 'September, 2018';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');
@@ -2223,7 +2223,7 @@ elseif size(file,2) ~=0 % load and process
     end
     
     % Load the options window to get details on the machine type
-    Options = HystLab_Load_Options('Main_Window_Call', handles.HystLab_Fig, 'DataTypeChoice', 'Hys');
+    Options = HystLab_Load_Options('Main_Window_Call', handles.HystLab_Fig);
     
     % Check if the user canceled
     if Options.LoadStatus == 0

@@ -62,7 +62,6 @@ end
 
 dontOpen = false;
 mainGuiInput = find(strcmp(varargin, 'Main_Window_Call'));
-DataTypeChoice = find(strcmp(varargin, 'DataTypeChoice'));
 
 if (isempty(mainGuiInput)) ...
         || (length(varargin) <= mainGuiInput) ...
@@ -75,7 +74,6 @@ else
     set(hObject, 'Name', 'Data file load options');
     % Remember the handle, and adjust our position
     handles.MainWindow = varargin{mainGuiInput+1};
-    DataTypeChoice = varargin{DataTypeChoice+1};
     
     % Position to be relative to parent:
     parentPosition = get(handles.MainWindow, 'Position'); %getpixelposition(handles.MainWindow)
@@ -94,27 +92,6 @@ end
 % Set the default values to hysteresis data and MicroMag
 handles.File_Type_Flag = 1;
 
-% Check the data types to use/lock
-switch DataTypeChoice
-    
-    case 'All'
-        % No lock, default hysteresis
-        handles.Data_Type = 'Hys';
-        
-    case 'Hys'
-        %Lock IRM, default hysteresis
-        handles.Data_Type = 'Hys';
-        set(handles.Data_IRM, 'Enable', 'off');
-        
-    case 'IRM'
-        % Lock hys, default IRM
-        handles.Data_Type = 'IRM';
-        set(handles.Data_Hys, 'Enable', 'off');
-        set(handles.Data_IRM, 'Value', 1);
-        
-    otherwise
-        error('HystLab_Load_Options:DataType', 'Unrecognized data type: %s', DataTypeChoice);
-end
 
 % Update handles structure
 guidata(hObject, handles);
@@ -144,25 +121,6 @@ varargout{1} = handles.output;
 delete(hObject);
 
 
-% --- Executes when selected object is changed in Data_Type_Panel.
-function Data_Type_Panel_SelectionChangeFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in Data_Type_Panel
-% eventdata  structure with the following fields (see UIBUTTONGROUP)
-%	EventName: string 'SelectionChanged' (read only)
-%	OldValue: handle of the previously selected object or empty if none was selected
-%	NewValue: handle of the currently selected object
-% handles    structure with handles and user data (see GUIDATA)
-
-switch get(eventdata.NewValue,'Tag') % Get Tag of selected object.
-    case 'Data_Hys'
-        handles.Data_Type = 'Hys';
-    case 'Data_IRM'
-        handles.Data_Type = 'IRM';
-end
-
-guidata(hObject, handles);
-
-
 % --- Executes when selected object is changed in File_Format_Panel.
 function File_Format_Panel_SelectionChangeFcn(hObject, eventdata, handles)
 % hObject    handle to the selected object in File_Format_Panel
@@ -185,9 +143,9 @@ switch get(eventdata.NewValue,'Tag') % Get Tag of selected object.
     case 'LakeShore_File_Input'
         handles.File_Type_Flag = 4;
         set(handles.Other_File_Menu, 'Enable', 'off');
-    case 'MagIC_File_Input'
-        handles.File_Type_Flag = 5;
-        set(handles.Other_File_Menu, 'Enable', 'off');
+%     case 'MagIC_File_Input'
+%         handles.File_Type_Flag = 5;
+%         set(handles.Other_File_Menu, 'Enable', 'off');
     case 'Other_File_Input'
         set(handles.Other_File_Menu, 'Enable', 'on');
         handles.File_Type_Flag = 'Other';
@@ -225,7 +183,6 @@ end
 
 % Get the options
 Return_struct.File_Type = handles.File_Type_Flag;
-Return_struct.Data_Type = handles.Data_Type;
 
 handles.output = Return_struct;
 guidata(hObject,handles);
