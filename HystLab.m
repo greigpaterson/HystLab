@@ -340,7 +340,11 @@ if Type == 0
         catch
             % TODO - add more sophisticated error catch to allow other data
             % to be used even though only some cause problems
-            keyboard
+            
+            % Delete the processing waitbar if in debug mode
+%             delete(h);
+%             keyboard
+            
             Error_Flag = 1;
             Cancel_Flag = 1;
             Error_MSG = [ {sprintf('%s could not be correctly processed.', handles.All_Names{ii} )};...

@@ -166,6 +166,13 @@ for jj = 1:nPercent
     HF_Data_AC(abs(HF_Data_AC(:,1)) > FUL, :) = [];
     
     
+    % Check we have enough data to compute the fits
+    if length(uniquetol(HF_Data_AC(:,1), 1e-4)) < 3
+        % Test for uniqueness to 1e-4 mT
+       break; 
+    end
+    
+    
     % Test the linear and approach to saturation models
     
     % Get the best linear model

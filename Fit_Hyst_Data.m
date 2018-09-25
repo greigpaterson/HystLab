@@ -436,13 +436,31 @@ P = size(Basis_Coeffs_ih,1) + size(Basis_Coeffs_rh,1);
 Basis_Coeffs = [{Basis_Coeffs_ih}, {Basis_Coeffs_rh}];
 
 % Get the fit and the measured moment data
+
+% This direct model curve works best for densly measured data sets
+% if exist('Old_Fields', 'var')
+%     Fitted_Data = Get_Fitted_Data(Old_Fields, Basis_Coeffs, 'Hys', [ih_Scale, rh_Scale]);
+%     M = [Old_Moments(:,1); -Old_Moments(:,2)];
+% else
+%     Fitted_Data = Get_Fitted_Data(Fields, Basis_Coeffs, 'Hys', [ih_Scale, rh_Scale]);
+%     M = [Moments(:,1); -Moments(:,2)];
+% end
+
+% This interpolation approach works better for sparse data
+Fitted_Data = Get_Fitted_Data(Fields, Basis_Coeffs, 'Hys', [ih_Scale, rh_Scale]);
+M = [Moments(:,1); -Moments(:,2)];
+
 if exist('Old_Fields', 'var')
-    Fitted_Data = Get_Fitted_Data(Old_Fields, Basis_Coeffs, 'Hys', [ih_Scale, rh_Scale]);
+    % Reinterpolate to the input fields if needed
+    tmp_Fit = NaN(length(Old_Fields), 6);
+    tmp_Fit(:,1:2) = [Old_Fields, -Old_Fields];
+    tmp_Fit(:,[3,5,6]) = interp1(Fitted_Data(:,1), Fitted_Data(:,[3,5,6]), tmp_Fit(:,1));
+    tmp_Fit(:,4) = interp1(Fitted_Data(:,2), Fitted_Data(:,4), tmp_Fit(:,2));
+    
+    Fitted_Data = tmp_Fit;
     M = [Old_Moments(:,1); -Old_Moments(:,2)];
-else
-    Fitted_Data = Get_Fitted_Data(Fields, Basis_Coeffs, 'Hys', [ih_Scale, rh_Scale]);
-    M = [Moments(:,1); -Moments(:,2)];
 end
+
 
 % Get the fit quality to the whole loop
 
