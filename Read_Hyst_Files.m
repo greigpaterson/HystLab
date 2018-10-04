@@ -221,10 +221,10 @@ for ii = 1:1:nfiles
                         
                         Mass = textscan(tline, '%*s%f');
                         
-                        if isempty(Mass{1}) || double(Mass{1}) == 0
+                        if isempty(Mass{1}) || str2double(Mass{1}) == 0
                             Mass = NaN;
                         else
-                            Mass = 1e6 * double(Mass{1}); % Convert to mg
+                            Mass = 1e6 * str2double(Mass{1}); % Convert to mg
                         end
                         
                     elseif regexpi(tline, 'Hysteresis loop?') == 1
@@ -360,10 +360,20 @@ for ii = 1:1:nfiles
                     
                     Mass = textscan(tline, '%*s %*s %f');
                     
-                    if isempty(Mass{1}) || double(Mass{1}) == 0
+                    if isempty(Mass{1}) || str2double(Mass{1}) == 0
                         Mass = NaN;
                     else
-                        Mass = double(Mass{1}); % Assumed to be in mg
+                        Mass = str2double(Mass{1}); % Assumed to be in mg
+                    end
+                    
+                elseif regexpi(tline, 'SAMPLE_MASS')
+
+                    Mass = strsplit(tline, ',');
+                    
+                    if isempty(Mass{2}) || str2double(Mass{2}) == 0
+                        Mass = NaN;
+                    else
+                        Mass = str2double(Mass{2}); % Assumed to be in mg
                     end
                     
                 elseif regexpi(tline, '\[Data]') == 1
@@ -375,7 +385,23 @@ for ii = 1:1:nfiles
             
             
             % Read the data header
-            tline = fgetl(FID);
+            Header = fgetl(FID);
+            
+            % Split the header to find the field and moment columns
+            SH = strsplit(Header, ',');
+            
+            Field_idx = find(cellfun(@(x) strcmpi(x, 'Field (Oe)'), SH)==1);
+            if isempty(Field_idx)
+                % Different file version
+                Field_idx = find(cellfun(@(x) strcmpi(x, 'Magnetic Field (Oe)'), SH)==1);
+            end
+            
+            Moment_idx = find(cellfun(@(x) strcmpi(x, 'Long Moment (emu)'), SH)==1);
+            if isempty(Moment_idx)
+                % Different file version
+                Moment_idx = find(cellfun(@(x) strcmpi(x, 'Moment (emu)'), SH)==1);
+            end
+            
             
             input = [];
             
@@ -392,8 +418,8 @@ for ii = 1:1:nfiles
             end
             
             % Get the fields and moments
-            Fields = cellfun(@str2double, input(:,3));
-            Moments = cellfun(@str2double, input(:,5));
+            Fields = cellfun(@str2double, input(:,Field_idx));
+            Moments = cellfun(@str2double, input(:,Moment_idx));
             
             % Convert units
             
@@ -409,52 +435,66 @@ for ii = 1:1:nfiles
             % Get the first header line
             header1 = fgetl(FID);
             
-            % Skipp a couple of lines
+            % Skip a couple of blank lines
             fgetl(FID);
             fgetl(FID);
             
             % Get the column header line and the data
             header2 = fgetl(FID);
-            input = textscan(FID, '%f\t%f\t%f\t%f\t%f');
-            
-            
+                       
             % Process the first header - contains mass
-            S = strtrim(regexpi(header1, 'weight:', 'split'));
-            S = textscan(S{2}, '%f %s');
+            SH1 = strtrim(regexpi(header1, 'weight:', 'split'));
+            SH1 = textscan(SH1{2}, '%f %s');
             
             % Get the mass in mg
-            switch S{2}{1}
+            switch SH1{2}{1}
                 
                 case 'mg'
-                    Mass = S{1};
+                    Mass = SH1{1};
                 case 'g'
-                    Mass = S{1}/1e3;
+                    Mass = SH1{1}/1e3;
                 case 'kg'
-                    Mass = S{1}/1e6;
+                    Mass = SH1{1}/1e6;
                 otherwise
-                    error('Read_Hyst_Files:VFTB_Mass', 'Unrecognized mass units: %s.', S{2}{1});
+                    error('Read_Hyst_Files:VFTB_Mass', 'Unrecognized mass units: %s.', SH1{2}{1});
             end
             
-            % Get the column headers
-            S = strtrim(regexp(header2, '\t', 'split'));
+            
+            % Get the column headers from header 2
+            SH2 = strtrim(regexp(header2, '\t', 'split'));
+            fmt = [repmat('%f\t', 1, length(SH2)-1), '%f'];
+            
+            % Read the data
+            input = textscan(FID, fmt);
             
             % Find the indices of the fields and moments/magnetizations
-            for jj=1:length(S);
-                
-                if strcmpi(S{jj}(1:5), 'field')
-                    Field_idx = jj;
+            for jj=1:length(SH2)
+                if any([regexpi(SH2{jj}, 'field'), regexpi(SH2{jj}, 'oe')])
+                    if isempty(regexpi(SH2{jj}, 'suscep'))
+                        % newest file format has susceptibility so skip this
+                        Field_idx = jj;
+                    end
                 end
-                
-                if strcmpi(S{jj}(1:3), 'mag')
-                    Moment_idx = jj;
+                if any([regexpi(SH2{jj}, 'mag'), regexpi(SH2{jj}, 'emu')])
+                    if isempty(regexpi(SH2{jj}, 'suscep'))
+                        % newest file format has susceptibility so skip this
+                        Moment_idx = jj;
+                    end
                 end
-                
             end
+
             
             % Get the fields and field units and convert to mT
-            S2 = strtrim(regexp(S{Field_idx}, '/', 'split'));
+            S2 = strtrim(regexp(SH2{Field_idx}, '/', 'split'));
             
-            switch S2{2}
+            % Determine the index where the unit is stored
+            if length(S2) == 1
+                Unit_idx = 1;
+            else
+                Unit_idx = 2;
+            end
+            
+            switch S2{Unit_idx}
                 case 'mT'
                     Fields = input{Field_idx};
                 case 'T'
@@ -462,18 +502,44 @@ for ii = 1:1:nfiles
                 case 'Oe'
                     Fields = input{Field_idx}./10;
                 otherwise
-                    error('Read_Hyst_Files:VFTB_Field', 'Unrecognized field units: %s.', S{2}{1});
+                    error('Read_Hyst_Files:VFTB_Field', 'Unrecognized field units: %s.', S2{2}{1});
             end
             
             
-            % Get the moments and moment units
-            S2 = strtrim(regexp(S{Moment_idx}, '/', 'split'));
-            
+            % Get the moments, moment units, and determine if we need to
+            % renormalize to moment from magnetization
             Moments = input{Moment_idx};
             
+            S2 = strtrim(regexp(SH2{Moment_idx}, '/', 'split'));
+            
             if length(S2) == 3
+                Unit_idx = 3;
+                ReNorm = 1;
+            elseif length(S2) ==2
+                
+                if any( ~cellfun(@isempty, regexpi(S2, 'emu')) )
+                    
+                    Unit_idx = find(~cellfun(@isempty, regexpi(S2, 'emu')))+1;
+                    ReNorm = 1;
+                    
+                else
+                    ReNorm = 0;
+                    warndlg([{sprintf('Specimen %s has no mass normalization.', files{ii})};...
+                        {'Please check this is correct and not an error.'}; {'The authors would be grateful for a copy of this file to update HystLab.'}],...
+                        'No Mass Normalization')
+                end
+                
+            else
+                ReNorm = 0;
+                warndlg([{sprintf('Specimen %s has no mass normalization.', files{ii})};...
+                    {'Please check this is correct and not an error.'}; {'The authors would be grateful for a copy of this file to update HystLab.'}],...
+                    'No Mass Normalization')
+            end
+            
+            
+            if ReNorm == 1
                 % We have mass normalization (convert magnetization to moment)
-                switch S2{3}
+                switch S2{Unit_idx}
                     case 'mg'
                         Moments = Moments .* Mass;
                     case 'g'
@@ -486,12 +552,29 @@ for ii = 1:1:nfiles
                 
             end
             
+            
             % Check the moment units and convert to Am2
-            switch S2{2}
+            % See if we can split the unit tring again to catch an E-x
+            % scale
+            S2s = strsplit(S2{Unit_idx-1}, ' ');
+            
+            if length(S2s) > 1
+                Moment_Unit = S2s{2};
+                if regexpi(S2s{1}, '^e-') || regexpi(S2s{1}, '^e+')
+                    Scale = 10^str2double(S2s{1}(2:end));
+                else
+                    Scale = 1;
+                end
+            else
+                Scale = 1;
+                Moment_Unit = S2{Unit_idx-1};
+            end
+            
+            switch Moment_Unit
                 case 'emu'
-                    Moments = Moments ./ 1e3;
+                    Moments = Scale .* Moments ./ 1e3;
                 otherwise
-                    error('Read_Hyst_Files:VFTB_Moment', 'Unrecognized moment units: %s.', S2{2});
+                    error('Read_Hyst_Files:VFTB_Moment', 'Unrecognized moment units: %s.', Moment_Unit);
             end
             
             % The VFTB records the inital moment acquisition
@@ -972,6 +1055,14 @@ for ii = 1:1:nfiles
     else
         Data_Order(ii) = 1;
     end
+    
+    % Remove any missing data
+    % This seems the case for some MPMS formats
+    Fields(isnan(Moments)) = [];
+    Moments(isnan(Moments)) = [];
+    Moments(isnan(Fields)) = [];
+    Fields(isnan(Fields)) = [];
+
     
     % Get the cell with all the data
     Data(ii) = {[Fields, Moments]};
