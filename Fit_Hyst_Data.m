@@ -329,6 +329,22 @@ IH_norm(1) = interp1(Pos_Fields, IH_norm, tmp_Fields(1), 'pchip');
 pcts = linspace(IH_norm(1), IH_norm(end), nBasis);
 
 % Logistic functions
+% catch and remove duplicates of normalized moments
+if length(unique(IH_norm)) < length(IH_norm)
+    tmp_var = unique(IH_norm);
+    tmp_n = length(tmp_var);
+    tmp_IH = NaN(tmp_n, 2);
+    
+    for ii = 1:tmp_n
+        tmp_IH(ii,:) = [tmp_var(ii), mean(tmp_Fields(IH_norm==tmp_var(ii)))];
+    end
+    
+    IH_norm = tmp_IH(:,1);
+    tmp_Fields = tmp_IH(:,2);
+    
+    clear vars tmp_var tmp_n;
+end
+
 Bih_m =  interp1(IH_norm, tmp_Fields, pcts, 'pchip');
 b_ih = log( Lih - 1 ) ./ (Bih_m);
 
