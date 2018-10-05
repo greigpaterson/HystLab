@@ -72,7 +72,7 @@ end
 
 if nargin < 5
     if Type_Flag ==1
-        % Data input so calcualte the noise curve
+        % Data input so calculate the noise curve
         Noise_Curve = [Field_Grid(:,1), (Moment_Grid(:,1) + Moment_Grid(:,2)) ];
     else
         error('Slope_Correction:Noise', 'Noise curve must input if data are not being corrected.');
@@ -292,14 +292,8 @@ if size(HF_Data, 1) < 16
         %         warndlg(MSG, 'Approach to Saturation Data');
         
         Error_Flag = 1;
-        
-        %         Processed_Data = [];
-        %         Uncorrected_Data = [];
-        %         Noise_Data = [];
-        %         Fitted_Data = [];
-        %         Data_Parameters = [];
-        %         Processing_Parameters = [];
-        %         Basis_Coeffs = [];
+        SC_Output1 = [];
+        SC_Output2 = [];
         return;
         
     end
@@ -363,10 +357,16 @@ switch Saturation_Flag
         % Linear high field? (lack-of-fit result)
         % Lack of fit p-values > 5% indicate that linear fit cannot be rejected
         Logic_Inds(:,2) = FpVals1 > 0.05;
+        % Catch values where the approach to saturation correction cannot
+        % be applied
+        Logic_Inds(isnan(FpVals1), 2) = 1;
         
         % Linear high field? (model comparison result)
         % Model comparion p-values > 5% indicate that the simpler linear model is better
         Logic_Inds(:,3) = FpVals2 > 0.05;
+        % Catch values where the approach to saturation correction cannot
+        % be applied
+        Logic_Inds(isnan(FpVals1), 3) = 1;
         
         
         if Linear_p > 0.05
