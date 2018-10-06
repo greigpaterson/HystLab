@@ -63,8 +63,9 @@ function [Corrected_Moments, Type, Drift_Ratio, Err_H, Smooth_Err_H, Temp_Ratio]
 %     hyperbolic basis functions, Geophys. J. Int., 124, 675-694,
 %     doi:10.1111/j.1365-246X.1996.tb05632.x
 %
-% [3] Paterson et al. (2018),
-% TODO - complete the reference
+% [3] Paterson, G. A., X. Zhao, M. Jackson, D. Heslop, Measuring, processing,
+%     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
+%     doi: 10.1029/2018GC007620
 %
 %
 

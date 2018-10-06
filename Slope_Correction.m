@@ -61,7 +61,8 @@ function [Moment_Grid, SC_Output1, SC_Output2, Error_Flag] = Slope_Correction(Fi
 %     Planet. Inter., 154, 299-307, doi: 10.1016/j.pepi.2005.06.016.
 %
 % [3] Paterson, G. A., X. Zhao, M. Jackson, D. Heslop, Measuring, processing,
-%     and analyzing hysteresis data, in prep.
+%     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
+%     doi: 10.1029/2018GC007620
 %
 %% Process the inputs
 
