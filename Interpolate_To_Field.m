@@ -6,11 +6,11 @@ function [Param_Int] = Interpolate_To_Field(Fields, Moments, Field_Int, Meth, Ex
 % expected monotonicity.
 %
 % Input:
-%        F_Data - the field steps of the parameter to be interpolated
-%        Param - the parameter to be interpolated
-%        F_Int - the fields to interpolate to
+%        Fields - the field steps of the moments to be interpolated
+%        Moments - the moments to be interpolated
+%        Field_Int - the fields to interpolate to
 %        Meth - the method of interpolation (linear or shape-preserving piecewise cubic)
-%        Int_Dir - the direction of the expected fields (< 0 is decreasing, > 0 is increasing
+%        Extrap_Flag - the extrapolation flag (=0 no extrapolation; =1 extrapolate where needed)
 %
 % Output:
 %        Param_Int - the interpolated parameter
@@ -55,10 +55,11 @@ Orig_data = [Fields, Moments];
 try
     % Try the raw interpolation first
     if Extrap_Flag == 1
-        Param_Int = interp1(Fields, Moments, Field_Int, Meth, 'extrap');
+        Param_Int = Extrapolate_Function(Fields, Moments, Field_Int, Meth);
     else
         Param_Int = interp1(Fields, Moments, Field_Int, Meth);
     end
+    
 catch
     % Take the gradients and find the points with zero gradient
     dF = diff(Fields);
@@ -88,10 +89,51 @@ catch
     
     % Get the interpolated data
     if Extrap_Flag == 1
-        Param_Int = interp1(Fields, Moments, Field_Int, Meth, 'extrap');
+        Param_Int = Extrapolate_Function(Fields, Moments, Field_Int, Meth);
     else
         Param_Int = interp1(Fields, Moments, Field_Int, Meth);
     end
     
+end
+
+
+
+function Param_Int = Extrapolate_Function(Fields, Moments, Field_Int, Meth)
+%
+% Function to perform interpolation with linear smoothed extrapolation
+%
+% Input:
+%        Fields - the field steps of the moments to be interpolated
+%        Moments - the moments to be interpolated
+%        Field_Int - the fields to interpolate to
+%        Meth - the method of interpolation (linear or shape-preserving piecewise cubic)
+%
+% Output:
+%        Param_Int - the interpolated parameter
+%
+
+
+% % First do normal interpolation
+Param_Int = interp1(Fields, Moments, Field_Int, Meth);
+
+% To avoid extrapolation artifacts, we use linear smoothing
+% Fit straight line to data above and below 80% of peak field and
+% use this fit for extrapolation
+tmp_data = sortrows([Fields, Moments]);
+minF = min(Fields);
+maxF = max(Fields);
+
+% Fit and extrapolate the negative field data
+if sum(Field_Int < minF) > 0
+    inds = tmp_data(:,1) <= 0.8*minF;
+    tmp_neg_fit = polyfit(tmp_data(inds,1), tmp_data(inds,2), 1);
+    Param_Int(Field_Int < minF) = Field_Int(Field_Int < minF)*tmp_neg_fit(1) + tmp_neg_fit(2);
+end
+
+% Fit and extrapolate the positive field data
+if sum(Field_Int > maxF) > 0
+    inds = tmp_data(:,1) >= 0.8*maxF;
+    tmp_pos_fit = polyfit(tmp_data(inds,1), tmp_data(inds,2), 1);
+    Param_Int(Field_Int > maxF) = Field_Int(Field_Int > maxF)*tmp_pos_fit(1) + tmp_pos_fit(2);
 end
 
