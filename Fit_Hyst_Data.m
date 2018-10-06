@@ -30,8 +30,9 @@ function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(M
 %     evaluation of magnetic hysteresis data, Geochem. Geophys. Geosyst.,
 %     11, Q04Z15, doi:10.1029/2009GC002932.
 %
-% [3] Paterson, G. A., X. Zhao, M. Jackson, D. Heslop, Measuring, processing, 
-%     and analyzing hysteresis data, in prep.
+% [3] Paterson, G. A., X. Zhao, M. Jackson, D. Heslop, Measuring, processing,
+%     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
+%     doi: 10.1029/2018GC007620
 %
 %
 %
@@ -55,6 +56,7 @@ if ~any(Fields == 0)
     % Each branch should now have an odd number of points and a zero field
     Fields = linspace(Old_Fields(1), Old_Fields(end), npts-1)';
     npts = npts-1;
+    Fields(ceil(npts/2)) = 0; % Ensure the mid field is zero
     
     % Reinterpolate the moments
     Moments = [interp1(Old_Fields, Old_Moments(:,1), Fields), interp1(-Old_Fields, Old_Moments(:,2), -Fields)];
@@ -62,7 +64,6 @@ if ~any(Fields == 0)
     Moments(:,2) = interp1(-Old_Fields, Old_Moments(:,2), -Fields);
     
 end
-
 
 % Number of basis functions for each type (total is 4*nBasis + 4)
 % Impose a minimum based on the number of data points
