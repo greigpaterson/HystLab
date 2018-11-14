@@ -60,8 +60,8 @@ Ver = ver('MATLAB');
 handles.Version = str2double(Ver.Version);
 
 % TODO - Update version number and date
-handles.HystLab_Version = '1.0.2';
-handles.HystLab_Date = 'October, 2018';
+handles.HystLab_Version = '1.0.4';
+handles.HystLab_Date = 'November, 2018';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');
