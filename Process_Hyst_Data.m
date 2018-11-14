@@ -86,14 +86,20 @@ function [Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parame
 %     hyperbolic basis functions, Geophys. J. Int., 124, 675?694,
 %     doi:10.1111/j.1365-246X.1996.tb05632.x
 %
-% [4] Paterson, G. A., X. Zhao, M. Jackson, D. Heslop, Measuring, processing, 
-%     and analyzing hysteresis data, in prep.
+% [4] Paterson, G. A., X. Zhao, M. Jackson, D. Heslop, Measuring, processing,
+%     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
+%     doi: 10.1029/2018GC007620
 %
 %
 
 % TODO - Full pole saturation. Create GUI for pole saturation data input,
 % which runs on first input, but is stored for any other reanalysis
 %
+
+%% Supress unwanted code analyzer warnings
+
+% Unused variables
+%#ok<*ASGLU>
 
 %% Process the inputs
 
@@ -112,6 +118,10 @@ FixedBeta_Val = -1.5;
 
 Trim_Flag = 0;
 Trim_Field = NaN;
+
+% Internally defined flag to regularize the fields to a regular grid (= 1),
+% or to interpolate lower branch field to upper branch fileds (~= 1)
+Regularize_Fields_Flag = 0;
 
 Pole_Flag = 0; % No correction
 Pole_Data = [];
@@ -220,7 +230,7 @@ AS_FVals1 = NaN(nData, 4);
 AS_pVals2 = NaN(nData, 4);
 AS_FVals2 = NaN(nData, 4);
 
-RH_SNR_HN = NaN(nData, 4); % High-field to noise SNR 
+RH_SNR_HN = NaN(nData, 4); % High-field to noise SNR
 RH_SNR_HL = NaN(nData, 4); % High-field to low-field SNR
 
 Fitted_Data = cell(nData, 1);
@@ -257,7 +267,7 @@ for ii = 1:1:nData
             Moments(abs(Fields) > Trim_Field) = [];
             Fields(abs(Fields) > Trim_Field) = [];
         else
-            warning('Process_Hyst_Data:TrimField', 'Field trimming has be requested, but no valid field supplied');m
+            warning('Process_Hyst_Data:TrimField', 'Field trimming has be requested, but no valid field supplied');
         end
         
     else
@@ -308,14 +318,20 @@ for ii = 1:1:nData
     
     if rem(npts,2)
         % odd number of points
-        Ind1 = floor(Ind1);
-        Ind2 = ceil(Ind2);
+        % HystLab assumes that at opposite saturation the loop as a single point
+        % Remove teh point
+        % Ind1 = floor(Ind1);
+        % Ind2 = ceil(Ind2);
+        
+        % Duplicate point on both branches
+        Ind1 = floor(Ind1) + 1;
+        Ind2 = ceil(Ind2) - 1;
     end
     
     
     Top_Curve=[Fields(1:Ind1), Moments(1:Ind1)];
     Bot_Curve=[Fields(Ind2+1:end), Moments(Ind2+1:end)];
-    
+
     % Sort the curves by field to ensure monotonic field sweeps
     Top_Curve = sortrows(Top_Curve, -1);
     Bot_Curve = sortrows(Bot_Curve, 1);
@@ -330,7 +346,7 @@ for ii = 1:1:nData
     Uncorrected_Data(ii) = {[ Top_Curve(:,1), Bot_Curve(:,1), Top_Curve(:,2), Bot_Curve(:,2),...
         ( Top_Curve(:,2) + Bot_interp )./2, ( Top_Curve(:,2) - Bot_interp )./2, ( Top_Curve(:,2) - Bot_inv_interp ) ]} ;
     
-    % Reoder the data
+    % Re-order the data to be from postive to negative saturation
     if Order == -1
         Uncorrected_Data(ii) = {[ -Top_Curve(:,1), -Bot_Curve(:,1), -Top_Curve(:,2), -Bot_Curve(:,2),...
             ( -Top_Curve(:,2) + -Bot_interp )./2, ( Top_Curve(:,2) - Bot_interp )./2, ( -Top_Curve(:,2) - -Bot_inv_interp ) ]} ;
@@ -460,51 +476,105 @@ for ii = 1:1:nData
     
     
     %% Regularize the data
+    %
+    % Either interpolate to grid of regularly spaced points or interpolate
+    % to the fields of the upper branch.
+    % In both cases we interpolate such that the fields of a single branch
+    % are symmetric about zero.
+    %
     
-    % TODO - Add functionality to set field grid to approximately mathc the
-    % field spacing of the measurement data
-    
+    if Regularize_Fields_Flag == 1
+        % Interpolate onto a regular grid
         % The value to round the field to
-    Fstep = mean([abs(diff(OFC_Top(:,1))); abs(diff(OFC_Bot(:,1)))]);
-    Field_Round = RoundField(Fstep);
-    
-    % Get the minimum field at the 4 field maxima
-    % This approach linear avoids extrapolation in the high field region
-    Max_Field = min([max(OFC_Top(:,1)), abs(min(OFC_Top(:,1))), max(OFC_Bot(:,1)), abs(min(OFC_Bot(:,1)))]);
-    Max_Field = floor(Max_Field/Field_Round)*Field_Round; % round down
-    
-    
-    % Down size the number of points to be restricted to the number of
-    % real data points measured in the field range of the grid
-    % We take this to be the minimum number from the upper or lower
-    % branches
-    npts_interp = min([sum(abs(OFC_Top(:,1)<=Max_Field)), sum(abs(OFC_Bot(:,1)<=Max_Field))]);
-    
-    %     if rem(npts_interp,2) == 0
-    %         % Subtract 1 point to make odd
-    %         % This ensures a zero field point
-    %         npts_interp = npts_interp -1;
-    %     end
-    
-    % Make the field grid
-    % Field_Grid = [Upper branch fields (+ to -), Lower branch fields (- to +)];
-    Field_Grid = [linspace(Max_Field, -Max_Field, npts_interp)', linspace(-Max_Field, Max_Field, npts_interp)'];
-    
-    % Interpolate the moments
-    % Moment_Grid = [Upper branch moments (+ to -), Lower branch moments (- to +)];
-    Moment_Grid = [ Interpolate_To_Field(OFC_Top(:,1), OFC_Top(:,2), Field_Grid(:,1), 'linear', 0), ...
-        Interpolate_To_Field(OFC_Bot(:,1), OFC_Bot(:,2), Field_Grid(:,2), 'linear', 0)];
+        Fstep = mean([abs(diff(OFC_Top(:,1))); abs(diff(OFC_Bot(:,1)))]);
+        Field_Round = RoundField(Fstep);
+        
+        % Get the minimum field at the 4 field maxima
+        % This approach linear avoids extrapolation in the high field region
+        Max_Field = min([max(OFC_Top(:,1)), abs(min(OFC_Top(:,1))), max(OFC_Bot(:,1)), abs(min(OFC_Bot(:,1)))]);
+        Max_Field = floor(Max_Field/Field_Round)*Field_Round; % round down
+        
+        
+        % Down size the number of points to be restricted to the number of
+        % real data points measured in the field range of the grid
+        % We take this to be the minimum number from the upper or lower
+        % branches
+        npts_interp = min([sum(abs(OFC_Top(:,1)<=Max_Field)), sum(abs(OFC_Bot(:,1)<=Max_Field))]);
+        
+        %     if rem(npts_interp,2) == 0
+        %         % Subtract 1 point to make odd
+        %         % This ensures a zero field point
+        %         npts_interp = npts_interp -1;
+        %     end
+        
+        % Make the field grid
+        % Field_Grid = [Upper branch fields (+ to -), Lower branch fields (- to +)];
+        Field_Grid = [linspace(Max_Field, -Max_Field, npts_interp)', linspace(-Max_Field, Max_Field, npts_interp)'];
+        
+        % Interpolate the moments
+        % Moment_Grid = [Upper branch moments (+ to -), Lower branch moments (- to +)];
+        Moment_Grid = [ Interpolate_To_Field(OFC_Top(:,1), OFC_Top(:,2), Field_Grid(:,1), 'linear', 0), ...
+            Interpolate_To_Field(OFC_Bot(:,1), OFC_Bot(:,2), Field_Grid(:,2), 'linear', 0)];
+        
+    else
+        % Interpolate to the upper branch fields of the measured data
+        
+        % Split the upper branch into positive and neagive fields, invert
+        % the negative fields, and average with the positive fields
+        % These mean fields are used for interpolation
+        tmp_F1 = OFC_Top(OFC_Top(:,1)>0,1);
+        tmp_F2 = flipud(-OFC_Top(OFC_Top(:,1)<0,1));
+        nMin = min([length(tmp_F1), length(tmp_F2)]);
+        mean_Fields = mean([tmp_F1(1:nMin), tmp_F2(1:nMin)],2);
+
+        % Add in the zero field step or lowest absolute field if present, not used,
+        % and it doesn't add more data than was measured.
+        if any(mean_Fields == min(abs(Fields))) == 0
+            % Min field not used
+            if min(abs(Fields)) == 0
+                % Min field is zero
+                if 4*length(mean_Fields)+2 <= length(Fields)
+                    % Not adding in more data
+                    mean_Fields = [mean_Fields; min(abs(Fields))]; %#ok<AGROW>
+                end
+            else
+                if 4*(length(mean_Fields)+1) <= length(Fields)
+                    % Not adding in more data
+                    mean_Fields = [mean_Fields; min(abs(Fields))]; %#ok<AGROW>
+                end
+            end
+        end
+        
+        % Make the field grid
+        % Field_Grid = [Upper branch fields (+ to -), Lower branch fields (- to +)];
+        if min(abs(Fields)) == 0
+            % Don't over replicate the zero field step if present
+            Field_Grid = [[mean_Fields(1:end-1); flipud(-mean_Fields)], [-mean_Fields(1:end-1); flipud(mean_Fields)]];
+        else
+            Field_Grid = [[mean_Fields; flipud(-mean_Fields)], [-mean_Fields; flipud(mean_Fields)]];
+        end
+        
+        
+        % Interpolate the moments
+        % Moment_Grid = [Upper branch moments (+ to -), Lower branch moments (- to +)];
+        Moment_Grid = [ Interpolate_To_Field(OFC_Top(:,1), OFC_Top(:,2), Field_Grid(:,1), 'linear', 1), ...
+            Interpolate_To_Field(OFC_Bot(:,1), OFC_Bot(:,2), Field_Grid(:,2), 'linear', 1)];
+        
+        Max_Field = max(abs(Field_Grid(:,1)));
+        
+    end
     
     
     %% Do the drift correction
     
     % Check for exponetial drift correction
     % Need to have an estiamte for paramagnetic susceptibility
+    
     if Drift_Flag == 5
+        
         % Get an estimate of the high-field (paramagnetic) susceptibility
         % Get this from the high-field slope correction after applying an
         % automated correction
-        
         
         % The main input parameters
         if isempty(Saturation_Field)
@@ -594,7 +664,7 @@ for ii = 1:1:nData
     AS_FVals2(ii,:) = SC_Output2{4};
     RH_SNR_HN(ii,:) = SC_Output2{5};
     RH_SNR_HL(ii,:) = SC_Output2{6};
-
+    
     
     %% Fit/Filter the data
     

@@ -77,9 +77,6 @@ set(handles.txt_MSG, 'string',...
 set(handles.txt_Ref, 'string', 'Paterson, G. A., Zhao, X., Jackson, M., & Heslop, D. (2018). Measuring, processing, and analyzing hysteresis data. Geochemistry, Geophysics, Geosystems, 19. doi: 10.1029/2018GC007620');
 set(handles.txt_URL, 'string', [{'The latest version of HystLab is avaiable at:'}, {'https://github.com/greigpaterson/HystLab'}]);
 
-
-% TODO - add full reference details
-
 % Update handles structure
 guidata(hObject, handles);
 
