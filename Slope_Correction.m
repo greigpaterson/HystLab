@@ -283,7 +283,7 @@ else
 end
 
 % Return a warning if too few data are available
-if size(HF_Data, 1) < 16
+if size(HF_Data, 1) < 12
     
     % Don't need to return a warning since there is no correction or
     % automatic
@@ -298,11 +298,6 @@ if size(HF_Data, 1) < 16
         
     else
         % Return warning
-        
-        %         MSG = {'Insufficient data provided for approach to saturation calculation.'; ' At least 4 data points per high-field segement are needed (a total of 16 data).';...
-        %             'The results may be poor, try again with more data points.'};
-        %         warndlg(MSG, 'Approach to Saturation Data');
-        
         Error_Flag = 1;
         SC_Output1 = [];
         SC_Output2 = [];
@@ -311,7 +306,8 @@ if size(HF_Data, 1) < 16
     end
     
 else
-    % We have enough data so to the correction
+    % We have enough data so to the corrections
+    % At the very least the linear correction
     
     % Get the best linear model
     LinFit = polyfit(HF_Data(:,1), HF_Data(:,2), 1);
@@ -329,15 +325,44 @@ else
         Current_Field_FFVals = NaN;
     end
     
-    % F-test model comparison results
-    [Current_Field_FpVals2, Current_Field_FFVals2] =  Get_F_Test([HF_Data(:,2), HF_Data(:,2)], [Mhat_lin, Mhat_nl], [2,4], 2);
-    
-    
-    AS_pVals1 = [FpVals1', Current_Field_FpVals];
-    AS_FVals1 = [FFVals1', Current_Field_FFVals];
-    
-    AS_pVals2 = [FpVals2', Current_Field_FpVals2];
-    AS_FVals2 = [FFVals2', Current_Field_FFVals2];
+    if any(isnan(Mhat_nl(:,1)))
+        % The approach to saturation correction cannot be done
+        
+        if Saturation_Flag == 3
+            % The user has specified this correction so return an error
+            Error_Flag = 2;
+            SC_Output1 = [];
+            SC_Output2 = [];
+            return;
+            
+        else
+            % The user hasn't specified teh apporach to saturation
+            % corection so we can return NaN for these and continue with
+            % other processing
+            
+            % Too few data for approach correction
+            % But we are doing another correction
+            AS_pVals1 = [FpVals1', NaN];
+            AS_FVals1 = [FFVals1', NaN];
+            
+            AS_pVals2 = [FpVals2', NaN];
+            AS_FVals2 = [FFVals2', NaN];
+            
+        end
+        
+    else
+        
+        % F-test model comparison results
+        [Current_Field_FpVals2, Current_Field_FFVals2] =  Get_F_Test([HF_Data(:,2), HF_Data(:,2)], [Mhat_lin, Mhat_nl], [2,4], 2);
+        
+        
+        AS_pVals1 = [FpVals1', Current_Field_FpVals];
+        AS_FVals1 = [FFVals1', Current_Field_FFVals];
+        
+        AS_pVals2 = [FpVals2', Current_Field_FpVals2];
+        AS_FVals2 = [FFVals2', Current_Field_FFVals2];
+        
+    end
     
 end
 

@@ -629,11 +629,29 @@ for ii = 1:1:nData
     [Moment_Grid, SC_Output1, SC_Output2, SC_Error_Flag] = Slope_Correction(Field_Grid, Moment_Grid, Input_Params);
     
     % Check for error output
-    if SC_Error_Flag == 1
+    switch SC_Error_Flag 
         
-        MSG = {'Insufficient data provided for approach to saturation calculation.'; ' At least 4 data points per high-field segement are needed (a total of 16 data).';...
+        case 1
+        
+        MSG = {'Insufficient high-field data for slope correction above user selected field value.'; 'At least 3 data points per high-field segement are needed (a total of 12 data).';...
             'The results may be poor, try again with more data points.'};
-        warndlg(MSG, 'Approach to Saturation Data');
+        warndlg(MSG, 'Insufficient Data');
+        
+        Error_Flag = 1;
+        
+        Processed_Data = [];
+        Uncorrected_Data = [];
+        Noise_Data = [];
+        Fitted_Data = [];
+        Data_Parameters = [];
+        Processing_Parameters = [];
+        Basis_Coeffs = [];
+        return;
+        
+        case 2
+            MSG = {'Approach to saturation calculation cannot be applied.'; 'The correction is poorly conditioned.';...
+            'Please select more high-field data points or apply another correction.'};
+        warndlg(MSG, 'Approach to Saturation Correction');
         
         Error_Flag = 1;
         
