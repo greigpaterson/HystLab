@@ -119,20 +119,37 @@ Param_Int = interp1(Fields, Moments, Field_Int, Meth);
 % To avoid extrapolation artifacts, we use linear smoothing
 % Fit straight line to data above and below 80% of peak field and
 % use this fit for extrapolation
+Threshold = 0.8;
 tmp_data = sortrows([Fields, Moments]);
 minF = min(Fields);
 maxF = max(Fields);
 
 % Fit and extrapolate the negative field data
 if sum(Field_Int < minF) > 0
-    inds = tmp_data(:,1) <= 0.8*minF;
+    inds = tmp_data(:,1) <= Threshold*minF;
+    
+    % Some sparse data are too sparse above 80% peak so take 5% steps until
+    % we have enough data
+    while sum(inds) < 2
+        Threshold = Threshold - 0.05;
+        inds = tmp_data(:,1) <= Threshold*minF;
+    end
+    
     tmp_neg_fit = polyfit(tmp_data(inds,1), tmp_data(inds,2), 1);
     Param_Int(Field_Int < minF) = Field_Int(Field_Int < minF)*tmp_neg_fit(1) + tmp_neg_fit(2);
 end
 
 % Fit and extrapolate the positive field data
 if sum(Field_Int > maxF) > 0
-    inds = tmp_data(:,1) >= 0.8*maxF;
+    inds = tmp_data(:,1) >= Threshold*maxF;
+    
+    % Some sparse data are too sparse above 80% peak so take 5% steps until
+    % we have enough data
+    while sum(inds) < 2
+        Threshold = Threshold - 0.05;
+        inds = tmp_data(:,1) >= Threshold*maxF;
+    end
+    
     tmp_pos_fit = polyfit(tmp_data(inds,1), tmp_data(inds,2), 1);
     Param_Int(Field_Int > maxF) = Field_Int(Field_Int > maxF)*tmp_pos_fit(1) + tmp_pos_fit(2);
 end

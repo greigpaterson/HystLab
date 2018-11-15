@@ -249,27 +249,38 @@ HF_Data(abs(HF_Data(:,1)) > FUL, :) = [];
 
 % Do test for loop closure
 
-% Get the high field average Mrh section
-HF_Mrh = Mrh_Mean(Mrh_Mean(:,1) >= Saturation_Field, :);
-HF_Mrh(abs(HF_Mrh(:,1)) > FUL, :) = []; % trim the extreme fields
-Area_HF_Mrh = abs(trapz(HF_Mrh(:,1), HF_Mrh(:,2))); % The area of the high field Mrh curve
-RMS_HF_Mrh = sqrt(mean(HF_Mrh(:,2).^2)); % RMS
-
-% Get the high field noise
-% Here we take both branches for calculating the average power
-HF_Noise = Noise_Curve(abs(Noise_Curve(:,1)) >= Saturation_Field, :);
-HF_Noise(abs(HF_Noise(:,1)) > FUL, :) = [];
-RMS_HF_Noise = sqrt(mean(HF_Noise(:,2).^2));
-
-
-% Get the closure stats
-Current_HF_Area = 20*log10(Area_HF_Mrh / Area_Mrh );
-Current_SNR_HF_Noise = 20*log10(RMS_HF_Mrh / RMS_HF_Noise );
-
-RH_SNR_HF_Area = [SNR_HF_Area', Current_HF_Area];
-RH_SNR_HF_Noise = [SNR_HF_Noise', Current_SNR_HF_Noise];
-
-
+% Check we have enough data to compute the fits
+if length(uniquetol(HF_Data(:,1), 1e-4)) < 3
+    % Test for uniqueness to 1e-4 mT
+    
+   % Set the high-field noise and Mrh area to NaN for the user selected
+   % saturation field - We don't have enough data   
+    RH_SNR_HF_Area = [SNR_HF_Area', NaN];
+    RH_SNR_HF_Noise = [SNR_HF_Noise', NaN];
+    
+else
+    
+    % Get the high field average Mrh section
+    HF_Mrh = Mrh_Mean(Mrh_Mean(:,1) >= Saturation_Field, :);
+    HF_Mrh(abs(HF_Mrh(:,1)) > FUL, :) = []; % trim the extreme fields
+    Area_HF_Mrh = abs(trapz(HF_Mrh(:,1), HF_Mrh(:,2))); % The area of the high field Mrh curve
+    RMS_HF_Mrh = sqrt(mean(HF_Mrh(:,2).^2)); % RMS
+    
+    % Get the high field noise
+    % Here we take both branches for calculating the average power
+    HF_Noise = Noise_Curve(abs(Noise_Curve(:,1)) >= Saturation_Field, :);
+    HF_Noise(abs(HF_Noise(:,1)) > FUL, :) = [];
+    RMS_HF_Noise = sqrt(mean(HF_Noise(:,2).^2));
+    
+    
+    % Get the closure stats
+    Current_HF_Area = 20*log10(Area_HF_Mrh / Area_Mrh );
+    Current_SNR_HF_Noise = 20*log10(RMS_HF_Mrh / RMS_HF_Noise );
+    
+    RH_SNR_HF_Area = [SNR_HF_Area', Current_HF_Area];
+    RH_SNR_HF_Noise = [SNR_HF_Noise', Current_SNR_HF_Noise];
+    
+end
 
 % Return a warning if too few data are available
 if size(HF_Data, 1) < 16
@@ -564,10 +575,10 @@ end
 %% Collate the output
 
 SC_Output1(1) = Saturation_Method;
-SC_Output1(2) =  Saturation_Field;
-SC_Output1(3) =  Xhf;
+SC_Output1(2) = Saturation_Field;
+SC_Output1(3) = Xhf;
 SC_Output1(4) = tmp_Ms;
-SC_Output1(5) =  AS_alpha;
+SC_Output1(5) = AS_alpha;
 SC_Output1(6) = AS_beta;
 SC_Output1(7) = Bsat;
 
