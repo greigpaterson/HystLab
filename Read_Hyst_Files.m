@@ -467,7 +467,16 @@ for ii = 1:1:nfiles
                 
                 % Get the column headers from header 2
                 SH2 = strtrim(regexp(header2, '\t', 'split'));
-                fmt = [repmat('%f\t', 1, length(SH2)-1), '%f'];
+                
+                if ~isempty(regexpi(SH2, 'time'))
+                    % Some files report time as number, others as a colon
+                    % delimited timestamp. So we read a string
+                    fmt_cell = repmat({'%f'}, 1,length(SH2));
+                    fmt_cell(cellfun(@(x) ~isempty(x), (regexpi(SH2, 'time')))) = {'%s'};
+                    fmt = strjoin(fmt_cell, '\\t');
+                else
+                    fmt = [repmat('%f\t', 1, length(SH2)-1), '%f'];
+                end
                 
                 % Read the data
                 input = textscan(FID, fmt);
