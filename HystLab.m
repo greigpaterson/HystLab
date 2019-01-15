@@ -22,7 +22,7 @@ function varargout = HystLab(varargin)
 
 % Edit the above text to modify the response to help HystLab
 
-% Last Modified by GUIDE v2.5 26-Sep-2017 15:46:16
+% Last Modified by GUIDE v2.5 03-Dec-2018 16:56:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -2162,6 +2162,105 @@ end
 
 Save_HystLab_Stats(handles.All_Names, handles.All_Masses, handles.All_Data_Parameters, handles.All_Processing_Parameters, file, path);
 
+
+% --------------------------------------------------------------------
+function MB_Export_Loop_Callback(hObject, eventdata, handles)
+% hObject    handle to MB_Export_Loop (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% TODO - Make more flexible
+if handles.Data_Loaded == 0
+    % No data loaded so do nothing
+    return;
+end
+
+Spec_Name = handles.All_Names{handles.spec_ind};
+
+
+% Start with the loop data 
+[file,path] = uiputfile(strcat(Spec_Name, '_Loops.dat'),'Save the specimen loops...');
+
+if ~ischar(file) && file==0
+    % User has cancelled
+    % Do nothing and...
+%     return;
+else
+    % Not cancelled so continue...
+    
+    switch handles.Norm_Type
+        case 'None'
+            % Do nothing (or normalize by 1)
+            Normalizer = 1;
+            Header = [{'Field [mT]'}, {'Moment [Am^2]'}, {'Fitted Moment [Am^2]'}];
+        case 'Ms'
+            % Normalize by Ms
+            Normalizer = handles.Current_Data_Parameters(5);
+            Header = [{'Field [mT]'}, {'Moment/Saturation'}, {'Fitted Moment/Saturation'}];
+        case 'Mass'
+            Normalizer = handles.Current_Spec_Mass .* 1e-6; % Convert to kg
+            Header = [{'Field [mT]'}, {'Magnetization [Am^2/kg]'}, {'Fitted Magnetization [Am^2/kg]'}];
+    end
+    
+    
+    Fields = [handles.Current_Processed_Data(:,1); handles.Current_Processed_Data(:,2)];
+    Mproc = [handles.Current_Processed_Data(:,3); handles.Current_Processed_Data(:,4)] ./ Normalizer;
+    Mfit = [handles.Current_Fitted_Data(:,3); handles.Current_Fitted_Data(:,4)] ./ Normalizer;
+    
+    Data = [num2cell(Fields), num2cell(Mproc), num2cell(Mfit)]';
+    
+    FID = fopen(strcat(path, file), 'wt');
+    
+    fprintf(FID, '%s\t%s\t%s\n', Header{:});
+    fprintf(FID, '%4.2f\t%1.4e\t%1.4e\n', Data{:});
+    
+    fclose(FID);
+    
+end
+
+
+% Start with the loop data 
+[file,path] = uiputfile(strcat(Spec_Name, '_Curves.dat'),'Save the specimen Mrh, Mih curves...');
+
+if ~ischar(file) && file==0
+    % User has cancelled
+    % Do nothing and...
+    return;
+else
+    % Not cancelled so continue...
+    
+    switch handles.Norm_Type
+        case 'None'
+            % Do nothing (or normalize by 1)
+            Normalizer = 1;
+            Header = [{'Field [mT]'}, {'Mrh [Am^2]'}, {'Mih [Am^2]'}, {'Noise [Am^2]'},...
+                {'Fitted Mrh [Am^2]'}, {'Fitted Mih [Am^2]'}, {'Smoothed Noise [Am^2]'}];
+        case 'Ms'
+            % Normalize by Ms
+            Normalizer = handles.Current_Data_Parameters(5);
+            Header = [{'Field [mT]'}, {'Mrh/Saturation'}, {'Mih/Saturation'}, {'Noise/Saturation'},...
+                {'Fitted Mrh/Saturation'}, {'Fitted Mih/Saturation'}, {'Smoothed Noise/Saturation'}];
+        case 'Mass'
+            Normalizer = handles.Current_Spec_Mass .* 1e-6; % Convert to kg
+            Header = [{'Field [mT]'}, {'Mrh [Am^2/kg]'}, {'Mih [Am^2/kg]'}, {'Noise [Am^2/kg]'},...
+                 {'Fitted Mrh [Am^2/kg]'}, {'Fitted Mih [Am^2/kg]'}, {'Smoothed Noise [Am^2/kg]'}];
+    end
+    
+    
+    Fields = handles.Current_Processed_Data(:,1);
+    Mproc = [handles.Current_Processed_Data(:,6), handles.Current_Processed_Data(:,5), handles.Current_Noise_Data(:,2)] ./ Normalizer;
+    Mfit = [handles.Current_Fitted_Data(:,6), handles.Current_Fitted_Data(:,5), handles.Current_Noise_Data(:,3)] ./ Normalizer;
+    
+    Data = [num2cell(Fields), num2cell(Mproc), num2cell(Mfit)]';
+    
+    FID = fopen(strcat(path, file), 'wt');
+    
+    fprintf(FID, '%s\t%s\t%s\t%s\t%s\t%s\t%s\n', Header{:});
+    fprintf(FID, '%4.2f\t%1.4e\t%1.4e\t%1.4e\t%1.4e\t%1.4e\t%1.4e\n', Data{:});
+    
+    fclose(FID);
+    
+end
 
 % --------------------------------------------------------------------
 function MB_MagIC_Callback(hObject, eventdata, handles)
