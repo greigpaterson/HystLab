@@ -434,6 +434,38 @@ for ii = 1:1:nfiles
                 % emu to Am^2
                 Moments = Moments./1e3;
                 
+                % Some MPMS files records the inital moment acquisition
+                % Remove this by finding the first step where the fields decrease
+                dF = diff(Fields);
+                ddF = diff(sign(dF));
+                
+                switch sum(ddF~=0)
+                    
+                    case 0
+                        % All fields are the same
+                        error('Read_Hyst_Files:MPMS', 'All fields are idetical. Please please check data file %s.', files{ii});
+                        
+                    case 1
+                        % All is good - do nothing
+                        
+                    case 2
+                        % We have 3 segments
+                        % Assume we have intial moment curve
+                        
+                        idx = find(ddF~=0); % indices of sign change
+                        
+                        % Get the intial curve
+                        Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
+                        
+                        % Remove inital curve
+                        Fields(1:idx(1)) = [];
+                        Moments(1:idx(1)) =[];
+                        
+                    otherwise
+                        error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
+                end
+                
+                
                 
             case 3 % VFTB
                 
@@ -1082,6 +1114,17 @@ for ii = 1:1:nfiles
                     otherwise
                         error('Read_Hyst_Files:MicroSense_VSM_Moment', 'Unrecognized moment units: %s.', Moment_Units);
                 end
+                
+                
+            case 7 % Generic two-column data
+                
+                % This is a simpe 2 column tab/space delimited file with
+                % fields and moments and 1 header line
+                % Units must be T and Am2
+                
+                % Mass is not recorded in the data file
+                Mass = NaN;
+
                 
                 
             otherwise
