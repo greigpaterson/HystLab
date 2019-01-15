@@ -529,25 +529,25 @@ for ii = 1:1:nData
 
         % Add in the zero field step or lowest absolute field if present, not used,
         % and it doesn't add more data than was measured.
-        if any(mean_Fields == min(abs(Fields))) == 0
+        if any(mean_Fields == min(abs(OFC_Top(:,1)))) == 0
             % Min field not used
-            if min(abs(Fields)) == 0
+            if min(abs(OFC_Top(:,1))) == 0
                 % Min field is zero
-                if 4*length(mean_Fields)+2 <= length(Fields)
+                if 4*length(mean_Fields)+2 <= length(OFC_Top(:,1))
                     % Not adding in more data
-                    mean_Fields = [mean_Fields; min(abs(Fields))]; %#ok<AGROW>
+                    mean_Fields = [mean_Fields; min(abs(OFC_Top(:,1)))]; %#ok<AGROW>
                 end
             else
-                if 4*(length(mean_Fields)+1) <= length(Fields)
+                if 4*(length(mean_Fields)+1) <= length(OFC_Top(:,1))
                     % Not adding in more data
-                    mean_Fields = [mean_Fields; min(abs(Fields))]; %#ok<AGROW>
+                    mean_Fields = [mean_Fields; min(abs(OFC_Top(:,1)))]; %#ok<AGROW>
                 end
             end
         end
         
         % Make the field grid
         % Field_Grid = [Upper branch fields (+ to -), Lower branch fields (- to +)];
-        if min(abs(Fields)) == 0
+        if min(abs(mean_Fields)) == 0
             % Don't over replicate the zero field step if present
             Field_Grid = [[mean_Fields(1:end-1); flipud(-mean_Fields)], [-mean_Fields(1:end-1); flipud(mean_Fields)]];
         else
@@ -605,8 +605,15 @@ for ii = 1:1:nData
         Chi_Hat = [];
     end
     
+    % TODO - Check for return correct pulldown menu in main window
     % Do the dirft correction
-    [Moment_Grid, Drift_Type, Drift_Ratio, DummyVar, DummyVar, Temp_Ratio] = Hyst_Drift_Correction(Field_Grid, Moment_Grid, 10, Drift_Flag, Chi_Hat);
+    if Drift_Flag == 5 && isnan(Chi_Hat)
+        warndlg([{'Paramagnetic correction cannot be applied.'},...
+            {'Applying automatic correction.'}], 'Paramagnetic Correction', 'modal');
+            [Moment_Grid, Drift_Type, Drift_Ratio, DummyVar, DummyVar, Temp_Ratio] = Hyst_Drift_Correction(Field_Grid, Moment_Grid, 10, 1, Chi_Hat);
+    else
+        [Moment_Grid, Drift_Type, Drift_Ratio, DummyVar, DummyVar, Temp_Ratio] = Hyst_Drift_Correction(Field_Grid, Moment_Grid, 10, Drift_Flag, Chi_Hat);
+    end
     
     % Drift_Type
     Drift_Type = Drift_Type +1; % Add one for indexing purposes
