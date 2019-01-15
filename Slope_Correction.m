@@ -166,11 +166,13 @@ for jj = 1:nPercent
     HF_Data_AC = [HF_Data_AC_1;HF_Data_AC_2;HF_Data_AC_3;HF_Data_AC_4];
     HF_Data_AC(abs(HF_Data_AC(:,1)) > FUL, :) = [];
     
-    
     % Check we have enough data to compute the fits
-    if length(uniquetol(HF_Data_AC(:,1), 1e-4)) < 3
-        % Test for uniqueness to 1e-4 mT
-       break; 
+    Field_Tol = 1e-3; % tolerance of 1e-3 mT (1 microT)
+    % Find unique field by rounding to the tolerance level
+    uFields = unique(round(HF_Data_AC(:,1)./Field_Tol).*Field_Tol);
+    if length(uFields) < 3
+        % Not enough unique points
+        break;
     end
     
     
@@ -250,7 +252,8 @@ HF_Data(abs(HF_Data(:,1)) > FUL, :) = [];
 % Do test for loop closure
 
 % Check we have enough data to compute the fits
-if length(uniquetol(HF_Data(:,1), 1e-4)) < 3
+uFields = unique(round(HF_Data(:,1)./Field_Tol).*Field_Tol);
+if length(uFields) < 3
     % Test for uniqueness to 1e-4 mT
     
    % Set the high-field noise and Mrh area to NaN for the user selected
