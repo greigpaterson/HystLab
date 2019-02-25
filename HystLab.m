@@ -60,8 +60,8 @@ Ver = ver('MATLAB');
 handles.Version = str2double(Ver.Version);
 
 % TODO - Update version number and date
-handles.HystLab_Version = '1.0.5';
-handles.HystLab_Date = 'January, 2019';
+handles.HystLab_Version = '1.0.6';
+handles.HystLab_Date = 'February, 2019';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');
@@ -2671,7 +2671,9 @@ S = mfilename('fullpath');
 name_len = length(mfilename());
 MyPath = S(1:end-name_len);
 
-file_name = strcat('HystLab_Manual_v', handles.HystLab_Version, '.pdf');
+SPLT = strsplit(handles.HystLab_Version, '.');
+
+file_name = strcat('HystLab_Manual_v', strjoin([SPLT(1:2), {'x'}], '.'), '.pdf');
 file_path = strcat(MyPath, './Documents/', file_name);
 
 try

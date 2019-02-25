@@ -619,6 +619,8 @@ for ii = 1:1:nfiles
                 switch Moment_Unit
                     case 'emu'
                         Moments = Scale .* Moments ./ 1e3;
+                    case 'Am2'
+                        % all good
                     otherwise
                         error('Read_Hyst_Files:VFTB_Moment', 'Unrecognized moment units: %s.', Moment_Unit);
                 end
@@ -681,7 +683,7 @@ for ii = 1:1:nfiles
                         
                         % Flag for the measuring the inital magentization curve
                         Initial_Flag = 0;
-
+                        
                         while ischar(tline)
                             
                             tline = fgetl(FID);
@@ -741,9 +743,14 @@ for ii = 1:1:nfiles
                         Moment_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Moment [')));
                         Seg_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Segment')));
                         
+                        if isempty(Field_idx)
+                            % Newer version have different header line
+                            Field_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Field \(�0H\) [')));
+                        end
+                        
                         if isempty(Moment_idx)
                             % Newer version have different header line
-                             Moment_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Moment \(m\) [')));
+                            Moment_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Moment \(m\) [')));
                         end
                         
                         if isempty(Field_idx) || isempty(Moment_idx)
@@ -755,7 +762,23 @@ for ii = 1:1:nfiles
                         Field_Units = char(Field_Units{1});
                         
                         Moment_Units = (regexpi(header{Moment_idx}, '\[(\w*)\]', 'tokens'));
-                        Moment_Units = char(Moment_Units{1});
+                        
+                        if isempty(Moment_Units)
+                            % Check for unusual text coding
+                            tmp_split = regexpi(header{Moment_idx}, '\[', 'split');
+                            tmp_split = regexpi(tmp_split{2}, '\]', 'split');
+                            tmp_units = char(tmp_split{1});
+                            
+                            switch tmp_units
+                                case 'A�m�'
+                                    Moment_Units = 'Am2';
+                                otherwise
+                                    error('Read_Hyst_Files:Lakeshore_Moment', 'Unrecognized moment units: %s.', tmp_units);
+                            end
+                            
+                        else
+                            Moment_Units = char(Moment_Units{1});
+                        end
                         
                         
                         input = [];
@@ -787,21 +810,23 @@ for ii = 1:1:nfiles
                             case 'mT'
                                 % All sorted - do nothing
                             case 'T'
-                                Fields = Fields./1e3;
+                                Fields = Fields.*1e3;
                             case 'Oe'
                                 Fields = Fields./10;
                             case 'G'
                                 Fields = Fields./10;
                             otherwise
-                                error('Read_Hyst_Files:IDEAS_VSM_Field', 'Unrecognized field units: %s.', Field_Units);
+                                error('Read_Hyst_Files:Lakeshore_Field', 'Unrecognized field units: %s.', Field_Units);
                         end
                         
                         % Convert Moment units
                         switch Moment_Units
                             case 'emu'
                                 Moments = Moments ./ 1e3;
+                            case 'Am2'
+                                % all good
                             otherwise
-                                error('Read_Hyst_Files:IDEAS_VSM_Moment', 'Unrecognized moment units: %s.', Moment_Units);
+                                error('Read_Hyst_Files:Lakeshore_Moment', 'Unrecognized moment units: %s.', Moment_Units);
                         end
                         
                         
@@ -824,7 +849,6 @@ for ii = 1:1:nfiles
                             
                         end
                         
-                        %                     keyboard
                         
                     case 'Start' % IDEAS VSM
                         
@@ -1124,7 +1148,7 @@ for ii = 1:1:nfiles
                 
                 % Mass is not recorded in the data file
                 Mass = NaN;
-
+                
                 
                 
             otherwise
