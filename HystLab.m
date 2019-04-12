@@ -2450,7 +2450,7 @@ if handles.Nspec == 1
 end
 
 
-Title = ['Remove ', handles.All_Names{handles.spec_ind}, '?'];
+Title = ['Remove ', char(handles.All_Names{handles.spec_ind}), '?'];
 
 Choice = questdlg('Do you wish to remove the current specimen?',...
     Title, 'Yes', 'No', 'No');
