@@ -179,7 +179,10 @@ else
     % Define the basis function coefficients
     
     % Fields of evenly spaced moments
-    RH_norm(1) = interp1(Pos_Fields, RH_norm, tmp_Fields(1), 'pchip');
+    if RH_norm(1) ~= 1
+        RH_norm(1) = interp1(Pos_Fields, RH_norm, tmp_Fields(1), 'pchip');
+    end
+    
     pcts = linspace(RH_norm(1), RH_norm(end), nBasis);
     
     % Logistic functions
