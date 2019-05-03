@@ -36,6 +36,13 @@ MicroMag_Legacy_Support = [-1, 0, 6, 8, 9];
 MicroMag_Modern_Support = [16.002, 16, 15];
 
 
+% Get info on the text encoding
+Force_Encoding = 0;
+Txt_Info = feature('locale');
+if ~strcmp(Txt_Info.encoding, 'UTF-8')
+  Force_Encoding = 1;
+end  
+
 % The number of files
 nfiles=length(files);
 
@@ -126,10 +133,10 @@ for ii = 1:1:nfiles
                         error('Read_Hyst_Files:MicroMagFormat', '%s is an unrecognized MicroMag file version: %d', name, File_Ver);
                     end
                     
-                    input = textscan(FID, '%f,%f%*[^\n]');
+                    data_input = textscan(FID, '%f,%f%*[^\n]');
                     
-                    Fields = input{1,1};
-                    Moments = input{1,2};
+                    Fields = data_input{1,1};
+                    Moments = data_input{1,2};
                     
                     % Get info from the header
                     switch File_Ver
@@ -307,10 +314,10 @@ for ii = 1:1:nfiles
                         Initial_Mag_Data = textscan(FID, '%f,%f%*[^\n]', nSkip); %#ok<NASGU>
                     end
                     
-                    input = textscan(FID, '%f,%f%*[^\n]');
+                    data_input = textscan(FID, '%f,%f%*[^\n]');
                     
-                    Fields = input{1,1};
-                    Moments = input{1,2};
+                    Fields = data_input{1,1};
+                    Moments = data_input{1,2};
                     
                     % Do a unit check and conversion
                     % Moments are Am^2
@@ -408,7 +415,7 @@ for ii = 1:1:nfiles
                 end
                 
                 
-                input = [];
+                data_input = [];
                 
                 while ischar(tline)
                     tline = fgetl(FID);
@@ -418,13 +425,13 @@ for ii = 1:1:nfiles
                         break;
                     end
                     
-                    input = [input; regexp(tline, ',', 'split')]; %#ok<AGROW>
+                    data_input = [data_input; regexp(tline, ',', 'split')]; %#ok<AGROW>
                     
                 end
                 
                 % Get the fields and moments
-                Fields = cellfun(@str2double, input(:,Field_idx));
-                Moments = cellfun(@str2double, input(:,Moment_idx));
+                Fields = cellfun(@str2double, data_input(:,Field_idx));
+                Moments = cellfun(@str2double, data_input(:,Moment_idx));
                 
                 % Convert units
                 
@@ -511,7 +518,7 @@ for ii = 1:1:nfiles
                 end
                 
                 % Read the data
-                input = textscan(FID, fmt);
+                data_input = textscan(FID, fmt);
                 
                 % Find the indices of the fields and moments/magnetizations
                 for jj=1:length(SH2)
@@ -542,11 +549,11 @@ for ii = 1:1:nfiles
                 
                 switch S2{Unit_idx}
                     case 'mT'
-                        Fields = input{Field_idx};
+                        Fields = data_input{Field_idx};
                     case 'T'
-                        Fields = input{Field_idx}./1e3;
+                        Fields = data_input{Field_idx}./1e3;
                     case 'Oe'
-                        Fields = input{Field_idx}./10;
+                        Fields = data_input{Field_idx}./10;
                     otherwise
                         error('Read_Hyst_Files:VFTB_Field', 'Unrecognized field units: %s.', S2{2}{1});
                 end
@@ -554,7 +561,7 @@ for ii = 1:1:nfiles
                 
                 % Get the moments, moment units, and determine if we need to
                 % renormalize to moment from magnetization
-                Moments = input{Moment_idx};
+                Moments = data_input{Moment_idx};
                 
                 S2 = strtrim(regexp(SH2{Moment_idx}, '/', 'split'));
                 
@@ -675,7 +682,11 @@ for ii = 1:1:nfiles
                         Mass = NaN;
                         
                         % Reopen the file and reader the header line
-                        FID = fopen(strcat(path, files{ii}),'r');
+                        if Force_Encoding == 1
+                            FID = fopen(strcat(path, files{ii}),'r', 'encodingIn', 'UTF-8');
+                        else                           
+                            FID = fopen(strcat(path, files{ii}),'r');
+                        end
                         
                         % Get the first line,
                         tline = fgetl(FID);
@@ -722,9 +733,9 @@ for ii = 1:1:nfiles
                                 S = strsplit(tline, ': ');
                                 
                                 switch S{2}
-                                    case 'FALSE'
+                                    case {'False', 'false', 'FALSE'}
                                         Initial_Flag = 0;
-                                    case 'TRUE'
+                                    case {'True', 'true', 'TRUE'}
                                         Initial_Flag = 1;
                                 end
                                 
@@ -746,6 +757,12 @@ for ii = 1:1:nfiles
                         if isempty(Field_idx)
                             % Newer version have different header line
                             Field_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Field \(�0H\) [')));
+                            
+                            % Catch Japanese fonts
+                            if isempty(Field_idx)
+                                Field_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Field \(?��0H\) [')));
+                            end
+                            
                         end
                         
                         if isempty(Moment_idx)
@@ -772,6 +789,8 @@ for ii = 1:1:nfiles
                             switch tmp_units
                                 case 'A�m�'
                                     Moment_Units = 'Am2';
+                                case 'A?��m?��'
+                                    Moment_Units = 'Am2';
                                 otherwise
                                     error('Read_Hyst_Files:Lakeshore_Moment', 'Unrecognized moment units: %s.', tmp_units);
                             end
@@ -781,7 +800,7 @@ for ii = 1:1:nfiles
                         end
                         
                         
-                        input = [];
+                        data_input = [];
                         
                         while ischar(tline)
                             tline = fgetl(FID);
@@ -793,15 +812,15 @@ for ii = 1:1:nfiles
                                 continue;
                             end
                             
-                            input = [input; regexp(tline, ',', 'split')]; %#ok<AGROW>
+                            data_input = [data_input; regexp(tline, ',', 'split')]; %#ok<AGROW>
                             
                         end
                         
                         
                         % Get the fields and moments
-                        Fields = cellfun(@str2double, input(:,Field_idx));
-                        Moments = cellfun(@str2double, input(:,Moment_idx));
-                        Segments = cellfun(@str2double, input(:,Seg_idx));  %#ok<FNDSB>
+                        Fields = cellfun(@str2double, data_input(:,Field_idx));
+                        Moments = cellfun(@str2double, data_input(:,Moment_idx));
+                        Segments = cellfun(@str2double, data_input(:,Seg_idx));  %#ok<FNDSB>
                         
                         
                         % Convert Field units
@@ -925,19 +944,19 @@ for ii = 1:1:nfiles
                         
                         
                         % Read the data
-                        input = textscan(FID, '%f %f');
+                        data_input = textscan(FID, '%f %f');
                         
                         % Convert Field units
                         switch Field_Units
                             
                             case 'mT'
-                                Fields = input{Field_idx};
+                                Fields = data_input{Field_idx};
                             case 'T'
-                                Fields = input{Field_idx}.*1e3;
+                                Fields = data_input{Field_idx}.*1e3;
                             case 'Oe'
-                                Fields = input{Field_idx}./10;
+                                Fields = data_input{Field_idx}./10;
                             case 'G'
-                                Fields = input{Field_idx}./10;
+                                Fields = data_input{Field_idx}./10;
                             otherwise
                                 error('Read_Hyst_Files:IDEAS_VSM_Field', 'Unrecognized field units: %s.', Field_Units);
                         end
@@ -945,9 +964,9 @@ for ii = 1:1:nfiles
                         % Convert Moment units
                         switch Moment_Units
                             case 'emu'
-                                Moments = input{Moment_idx} ./ 1e3;
+                                Moments = data_input{Moment_idx} ./ 1e3;
                             case 'Am2'
-                                Moments = input{Moment_idx};
+                                Moments = data_input{Moment_idx};
                             otherwise
                                 error('Read_Hyst_Files:IDEAS_VSM_Moment', 'Unrecognized moment units: %s.', Moment_Units);
                         end
@@ -1110,19 +1129,19 @@ for ii = 1:1:nfiles
                 end
                 
                 % Read the data header
-                input = textscan(FID, fmt, 'HeaderLines', 1);
+                data_input = textscan(FID, fmt, 'HeaderLines', 1);
                 
                 % Convert Field units
                 switch Field_Units
                     
                     case 'mT'
-                        Fields = input{Field_idx};
+                        Fields = data_input{Field_idx};
                     case 'T'
-                        Fields = input{Field_idx}.*1e3;
+                        Fields = data_input{Field_idx}.*1e3;
                     case 'Oe'
-                        Fields = input{Field_idx}./10;
+                        Fields = data_input{Field_idx}./10;
                     case 'G'
-                        Fields = input{Field_idx}./10;
+                        Fields = data_input{Field_idx}./10;
                     otherwise
                         error('Read_Hyst_Files:MicroSense_VSM_Field', 'Unrecognized field units: %s.', Field_Units);
                 end
@@ -1130,11 +1149,11 @@ for ii = 1:1:nfiles
                 % Convert Moment units
                 switch Moment_Units
                     case 'emu'
-                        Moments = input{Moment_idx} ./ 1e3;
+                        Moments = data_input{Moment_idx} ./ 1e3;
                     case 'memu'
-                        Moments = input{Moment_idx}./1e6;
+                        Moments = data_input{Moment_idx}./1e6;
                     case 'Am2'
-                        Moments = input{Moment_idx};
+                        Moments = data_input{Moment_idx};
                     otherwise
                         error('Read_Hyst_Files:MicroSense_VSM_Moment', 'Unrecognized moment units: %s.', Moment_Units);
                 end
@@ -1148,6 +1167,36 @@ for ii = 1:1:nfiles
                 
                 % Mass is not recorded in the data file
                 Mass = NaN;
+                
+                
+                % Read and split the data
+                data_input = textscan(FID, '%f %f', 'HeaderLines', 1);
+                
+                Fields = data_input{1};
+                Moments = data_input{2};
+                
+                
+            case 8 % Molspin VSM
+                
+                % Based on a single example file
+                % Units mT and Am2
+                
+                % Mass is not recorded in the data file
+                Mass = NaN;
+                
+                % Read and split the data
+                data_input = textscan(FID, '%f %f %f', 'HeaderLines', 1);
+                
+                Fields = data_input{1};
+                Moments = data_input{2};
+                
+                % Find the idx of the first large difference in the fields
+                % This is only a rough approach as no information is
+                % available on the details of this file format
+                idx = find(abs(diff(Fields)) > 1.2*max(abs(diff(Fields(1:5)))), 1, 'first');
+                
+                Fields = Fields(1:idx);
+                Moments = Moments(1:idx);
                 
                 
                 

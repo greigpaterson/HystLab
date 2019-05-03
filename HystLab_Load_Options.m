@@ -175,6 +175,10 @@ if strcmpi(handles.File_Type_Flag, 'Other')
     switch str % Get Tag of selected object.
         case 'MicroSense VSM'
             handles.File_Type_Flag = 6;
+        case 'Generic 2 Column'
+            handles.File_Type_Flag = 7;
+        case 'MolSpin VSM'
+            handles.File_Type_Flag = 8;
         otherwise
             disp('Still to add');
             return;
