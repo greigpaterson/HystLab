@@ -3,6 +3,8 @@ function R2 = GetR2(X, Y)
 % function to determine the squared Pearson linear correlation between two input
 % vectors, X and Y
 %
+% Last Modified 2019/05/07
+%
 
 %% Input checks
 % TODO - Add input checks and input flexibility

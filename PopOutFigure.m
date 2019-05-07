@@ -8,6 +8,8 @@ function PopOutFigure(AxisHandle, FigName)
 %        FigName - the name of the figure to create or update if it already
 %                  exists
 %
+% Last Modified 2019/05/07
+%
 
 %% Check to see if the figure exists
 

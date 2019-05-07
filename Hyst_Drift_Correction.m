@@ -67,6 +67,7 @@ function [Corrected_Moments, Type, Drift_Ratio, Err_H, Smooth_Err_H, Temp_Ratio]
 %     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
 %     doi: 10.1029/2018GC007620
 %
+% Last Modified 2019/05/07
 %
 
 %% Input processing and checking

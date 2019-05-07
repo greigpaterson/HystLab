@@ -25,6 +25,9 @@ function [Specimen_Names, Data, Specimen_Masses, Data_Order] = Read_Hyst_Files(p
 % TODO - Add reads for dates and timestamps for future MagIC proofing
 %
 
+% Last Modified 2019/05/07
+%
+
 %% Inital processing
 
 % Define the MicroMag file versions that are supported
@@ -469,9 +472,13 @@ for ii = 1:1:nfiles
                         Moments(1:idx(1)) =[];
                         
                     otherwise
-                        error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
+                        % Duplicate field measurements are present we will
+                        % land here
+                        % Until we have clear examples of both initial
+                        % curves and hysteresis loops with replicate
+                        % fields we will just let these data through as is
+                        % error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
                 end
-                
                 
                 
             case 3 % VFTB
@@ -683,7 +690,7 @@ for ii = 1:1:nfiles
                         
                         % Reopen the file and reader the header line
                         if Force_Encoding == 1
-                            FID = fopen(strcat(path, files{ii}),'r', 'encodingIn', 'UTF-8');
+                            FID = fopen(strcat(path, files{ii}),'r', 'n', 'UTF-8');
                         else                           
                             FID = fopen(strcat(path, files{ii}),'r');
                         end

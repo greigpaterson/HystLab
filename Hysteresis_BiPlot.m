@@ -22,7 +22,8 @@ function varargout = Hysteresis_BiPlot(varargin)
 
 % Edit the above text to modify the response to help Hysteresis_BiPlot
 
-% Last Modified by GUIDE v2.5 06-Sep-2017 17:02:33
+% Last Modified 2019/05/07
+%
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;

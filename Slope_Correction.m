@@ -64,6 +64,9 @@ function [Moment_Grid, SC_Output1, SC_Output2, Error_Flag] = Slope_Correction(Fi
 %     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
 %     doi: 10.1029/2018GC007620
 %
+% Last Modified 2019/05/07
+%
+
 %% Process the inputs
 
 if nargin < 4

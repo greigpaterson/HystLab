@@ -19,6 +19,8 @@ function [yIso] = IsoReg(y)
 %          R: Pool-Adjacent-Violators Algorithm (PAVA) and Active Set
 %          Methods, J. Stat. Softw. 32, 1?24. doi: 10.18637/jss.v032.i05.
 %
+% Last Modified 2019/05/07
+%
 
 %% Some input checks
 

@@ -22,7 +22,7 @@ function varargout = About_HystLab(varargin)
 
 % Edit the above text to modify the response to help About_HystLab
 
-% Last Modified by GUIDE v2.5 21-Aug-2017 17:50:49
+% Last Modified 2019/05/07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;

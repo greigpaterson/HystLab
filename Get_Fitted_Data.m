@@ -21,6 +21,8 @@ function [Model_Fit] = Get_Fitted_Data(Fields, Basis, type, Params)
 %                  For hysteresis, [Fields(U,L), Upper, Lower, Mih, Mrh]
 %                  For IRM, [Fields, IRM]
 %
+% Last Modified 2019/05/07
+%
 
 %% Some input checking
 

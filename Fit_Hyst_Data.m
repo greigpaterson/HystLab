@@ -35,6 +35,7 @@ function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(M
 %     doi: 10.1029/2018GC007620
 %
 %
+% Last Modified 2019/05/07
 %
 
 %% Some input processing and defaults

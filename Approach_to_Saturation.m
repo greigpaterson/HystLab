@@ -33,7 +33,8 @@ function [Chi_HF, Ms, Mhat, alpha, beta, err_flag] = Approach_to_Saturation(HF_D
 %     evaluation of magnetic hysteresis data, Geochem. Geophys. Geosyst.,
 %     11, Q04Z15, doi:10.1029/2009GC002932.
 %
-
+% Last Modified 2019/05/07
+%
 %% Input checking and processing
 
 if nargin < 2

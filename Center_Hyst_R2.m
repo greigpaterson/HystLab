@@ -12,6 +12,8 @@ function [R2, M0] = Center_Hyst_R2(Top_Curve, Bot_Curve, Hoff)
 %             inverted bottom curve
 %        M0 - the magnetization offset
 %
+% Last Modified 2019/05/07
+%
 
 %% Process inputs
 

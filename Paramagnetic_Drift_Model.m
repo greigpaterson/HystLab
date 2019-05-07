@@ -34,6 +34,8 @@ function [MisFit, Model_Err_H, Drift_Results] = Paramagnetic_Drift_Model(Noise, 
 %     and analyzing hysteresis data, Geochemistry, Geophysics, Geosystems, 19,
 %     doi: 10.1029/2018GC007620
 %
+% Last Modified 2019/05/07
+%
 
 %% Input processing and checking
 

@@ -22,6 +22,8 @@ function [p, F] = Get_F_Test(M, Mhat, P, type)
 %     evaluation of magnetic hysteresis data, Geochem. Geophys. Geosyst.,
 %     11, Q04Z15, doi:10.1029/2009GC002932.
 %
+% Last Modified 2019/05/07
+%
 
 %% Check the inputs
 

@@ -13,6 +13,8 @@ function [Sy] = Loess_Smooth(y, span)
 % Output:
 %         Sy - the smoothed version of Y
 %
+% Last Modified 2019/05/07
+%
 
 %% Do some input checks
 

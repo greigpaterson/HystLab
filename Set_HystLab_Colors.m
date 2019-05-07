@@ -22,7 +22,8 @@ function varargout = Set_HystLab_Colors(varargin)
 
 % Edit the above text to modify the response to help Set_HystLab_Colors
 
-% Last Modified by GUIDE v2.5 13-Nov-2017 16:53:23
+% Last Modified 2019/05/07
+%
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;

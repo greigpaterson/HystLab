@@ -27,6 +27,8 @@ function Abunds = SUNSAL(X,EM)
 %     in 2nd  IEEE GRSS Workshop on Hyperspectral Image and Signal
 %     Processing-WHISPERS' 2010, Raykjavik, Iceland, 2010.
 %
+% Last Modified 2019/05/07
+%
 
 %% Do some basic check and input processing
 

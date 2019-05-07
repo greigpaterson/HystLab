@@ -2,6 +2,8 @@ function tmpFig = Publish_Figure(varargin)
 %
 % Function to create a qausi-publication ready figure for HystLab
 %
+% Last Modified 2019/05/07
+%
 
 %% Input checking
 % Should be redundant as this function is only internally called

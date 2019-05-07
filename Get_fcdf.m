@@ -12,7 +12,7 @@ function p = Get_fcdf(x, v1, v2)
 %
 % Written by Greig A. Paterson
 %
-% Updated: 17 May, 2016
+% Last Modified 2019/05/07
 %
 
 %% Check inputs
