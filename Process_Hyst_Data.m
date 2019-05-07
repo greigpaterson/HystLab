@@ -96,6 +96,9 @@ function [Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parame
 % which runs on first input, but is stored for any other reanalysis
 %
 
+% Last Modified 2019/05/07
+%
+
 %% Supress unwanted code analyzer warnings
 
 % Unused variables
@@ -336,8 +339,49 @@ for ii = 1:1:nData
     Top_Curve = sortrows(Top_Curve, -1);
     Bot_Curve = sortrows(Bot_Curve, 1);
     
-    % Define the "Uncorrected" data, which is after trimming and pole
-    % saturation
+    % Average duplicate field data
+    % Top curve
+    if length(Top_Curve(:,1)) ~= length(unique(Top_Curve(:,1)))
+        
+        % Find indices that are duplicate
+        [unique_data, row_idx] = unique(Top_Curve(:,1),'first');
+        Duplicate_idx = find(not(ismember(1:numel(Top_Curve(:,1)),row_idx)));
+        
+        % Loop through and average the moments
+        for jj = 1: length(Duplicate_idx)
+            if Top_Curve(Duplicate_idx(jj)-1,1) == Top_Curve(Duplicate_idx(jj),1)
+                Top_Curve(Duplicate_idx(jj)-1,2) = mean([Top_Curve(Duplicate_idx(jj)-1,2),Top_Curve(Duplicate_idx(1),2)]);
+                
+                % Remove the excess data
+                Top_Curve(Duplicate_idx(jj),:) = [];
+            end
+        end
+        
+
+    end
+    
+    % Bottom curve
+    if length(Bot_Curve(:,1)) ~= length(unique(Bot_Curve(:,1)))
+        
+        % Find indices that are duplicate
+        [unique_data, row_idx] = unique(Bot_Curve(:,1),'first');
+        Duplicate_idx = find(not(ismember(1:numel(Bot_Curve(:,1)),row_idx)));
+        
+        % Loop through and average the moments
+        for jj = 1: length(Duplicate_idx)
+            if Bot_Curve(Duplicate_idx(jj)-1,1) == Bot_Curve(Duplicate_idx(jj),1)
+                Bot_Curve(Duplicate_idx(jj)-1,2) = mean([Bot_Curve(Duplicate_idx(jj)-1,2), Bot_Curve(Duplicate_idx(1),2)]);
+                
+                % Remove the excess data
+                Bot_Curve(Duplicate_idx(jj),:) = [];
+            end
+        end
+        
+
+    end
+    
+    % Define the "Uncorrected" data, which is after averaging repeat fields, 
+    % trimming and pole saturation
     
     % Get the bottom branch interpolated to the top
     Bot_interp = Interpolate_To_Field(Bot_Curve(:,1), Bot_Curve(:,2), Top_Curve(:,1), 'linear', 1);
@@ -903,12 +947,23 @@ for ii = 1:1:nData
             Bc(ii) = mean( [abs(Interpolate_To_Field(Moment_Grid(:,1), Field_Grid(:,1), 0, 'linear')), abs(Interpolate_To_Field(Moment_Grid(:,2), Field_Grid(:,2), 0, 'linear')) ]);
         catch
             
+            % Get a series of indices to interpolate from
             idx1a = find(Moment_Grid(:,1) <= Moment_Grid(1,1)./2, 1, 'first');
             idx1b = find(Moment_Grid(:,1) <= -Moment_Grid(1,1)./2, 1, 'first');
-            
-            
+                       
             idx2a = find(Moment_Grid(:,2) >= Moment_Grid(1,2)./2, 1, 'first');
             idx2b = find(Moment_Grid(:,2) >= -Moment_Grid(1,2)./2, 1, 'first');
+            
+            % Catch cases where this fails and just take 2 points
+            if idx1a == idx1b
+                idx1a = find(Moment_Grid(:,1) > 0, 1, 'last');
+                idx1b = find(Moment_Grid(:,1) < 0, 1, 'first');
+            end
+            
+            if idx2a == idx2b
+                idx2a = find(Moment_Grid(:,2) < 0, 1, 'last');
+                idx2b = find(Moment_Grid(:,2) > 0, 1, 'first');
+            end
             
             Bc(ii) = mean( [abs(Interpolate_To_Field(Moment_Grid(idx1a:idx1b,1), Field_Grid(idx1a:idx1b,1), 0, 'linear')), abs(Interpolate_To_Field(Moment_Grid(idx2a:idx2b,2), Field_Grid(idx2a:idx2b,2), 0, 'linear')) ]);
             
