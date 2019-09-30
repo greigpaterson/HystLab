@@ -1168,9 +1168,9 @@ for ii = 1:1:nfiles
                 
             case 7 % Generic two-column data
                 
-                % This is a simpe 2 column tab/space delimited file with
+                % This is a simple 2 column tab/space delimited file with
                 % fields and moments and 1 header line
-                % Units must be T and Am2
+                % Units must be mT and Am2
                 
                 % Mass is not recorded in the data file
                 Mass = NaN;

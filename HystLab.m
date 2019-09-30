@@ -22,7 +22,7 @@ function varargout = HystLab(varargin)
 
 % Edit the above text to modify the response to help HystLab
 
-% Last Modified 2019/05/07
+% Last Modified 2019/09/30
 %
 
 % Begin initialization code - DO NOT EDIT
@@ -61,8 +61,8 @@ Ver = ver('MATLAB');
 handles.Version = str2double(Ver.Version);
 
 % TODO - Update version number and date
-handles.HystLab_Version = '1.0.6';
-handles.HystLab_Date = 'February, 2019';
+handles.HystLab_Version = '1.0.7';
+handles.HystLab_Date = 'September, 2019';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');
@@ -238,7 +238,7 @@ function HystLab_Fig_CloseRequestFcn(hObject, eventdata, handles)
 
 % Hint: delete(hObject) closes the figure
 
-if handles.Data_Loaded ~= 0;
+if handles.Data_Loaded ~= 0
     
     choice = questdlg('Do you want to save before quitting?', 'Save Session?', 'Yes', 'No', 'Cancel', 'Cancel');
     
@@ -2674,7 +2674,8 @@ MyPath = S(1:end-name_len);
 
 SPLT = strsplit(handles.HystLab_Version, '.');
 
-file_name = strcat('HystLab_Manual_v', strjoin([SPLT(1:2), {'x'}], '.'), '.pdf');
+% file_name = strcat('HystLab_Manual_v', strjoin([SPLT(1:2), {'x'}], '.'), '.pdf');
+file_name = strcat('HystLab_Manual_v', strjoin(SPLT(1:3), '.'), '.pdf');
 file_path = strcat(MyPath, './Documents/', file_name);
 
 try
