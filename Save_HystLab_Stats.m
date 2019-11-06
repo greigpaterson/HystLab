@@ -22,8 +22,9 @@ if ~isequal(size(Names, 1), size(Masses,1), size(Stats,1), size(Params,1))
 end
 
 
-if sum(cellfun(@iscell, Names)) == length(Names)
-%     keyboard
+while sum(cellfun(@iscell, Names)) > 0
+% TODO - Check the reason for needing this fix. It appears to be realted to long 
+% file names stored as cells within cells
     Names = [Names{:}]';
 end
 
@@ -141,7 +142,7 @@ for ii = 1:nPrint
             tmp_Params(cellfun(@(x) isequal(x-1,9), tmp_Params)) = {'Paramagnetic/Symmetric'};
             
         case 8
-            % Saturastion flag
+            % Saturation flag
             tmp_Params(cellfun(@(x) isequal(x,0), tmp_Params)) = {'None'};
             tmp_Params(cellfun(@(x) isequal(x,1), tmp_Params)) = {'Automatic'};
             tmp_Params(cellfun(@(x) isequal(x,2), tmp_Params)) = {'Linear High-Field'};
