@@ -22,7 +22,7 @@ function varargout = HystLab(varargin)
 
 % Edit the above text to modify the response to help HystLab
 
-% Last Modified 2019/09/30
+% Last Modified 2019/11/06
 %
 
 % Begin initialization code - DO NOT EDIT
@@ -60,9 +60,10 @@ handles.output = hObject;
 Ver = ver('MATLAB');
 handles.Version = str2double(Ver.Version);
 
-% TODO - Update version number and date
-handles.HystLab_Version = '1.0.7';
-handles.HystLab_Date = 'September, 2019';
+% TODO - Update version number and date to read from a file
+% Stops having to update this main function for fixes elsewhere
+handles.HystLab_Version = '1.0.8';
+handles.HystLab_Date = 'November, 2019';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');
