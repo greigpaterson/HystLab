@@ -187,8 +187,22 @@ else
     pcts = linspace(RH_norm(1), RH_norm(end), nBasis);
     
     % Logistic functions
-    Brh_m =  interp1(RH_norm, tmp_Fields, pcts, 'pchip');
+    
+    if length(RH_norm) ~= length(unique(RH_norm))
+        % Catch noisy data where some values in the RH curve are non-unique
+        [dum_var, ia]=unique(RH_norm);
+        interp_array = sortrows([tmp_Fields(ia), RH_norm(ia)],1);
+        
+        Brh_m =  interp1(interp_array(:,2), interp_array(:,1), pcts, 'pchip');
+        
+    else
+    
+        Brh_m =  interp1(RH_norm, tmp_Fields, pcts, 'pchip');
+    
+    end
+    
     b_rh = log( Lrh - 1 ) ./ Brh_m;
+    
     
     % the sech coeffs
     s = log(2+sqrt(3))./Brh_m;
