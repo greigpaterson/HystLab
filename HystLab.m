@@ -62,8 +62,8 @@ handles.Version = str2double(Ver.Version);
 
 % TODO - Update version number and date to read from a file
 % Stops having to update this main function for fixes elsewhere
-handles.HystLab_Version = '1.0.8';
-handles.HystLab_Date = 'November, 2019';
+handles.HystLab_Version = '1.0.9';
+handles.HystLab_Date = 'December, 2019';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');
