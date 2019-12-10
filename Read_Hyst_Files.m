@@ -436,6 +436,12 @@ for ii = 1:1:nfiles
                 Fields = cellfun(@str2double, data_input(:,Field_idx));
                 Moments = cellfun(@str2double, data_input(:,Moment_idx));
                 
+                % Check for missing values to remove
+                Bad_idx = any(isnan([Fields, Moments]),2);
+                Fields = Fields(~Bad_idx);
+                Moments = Moments(~Bad_idx);
+
+                
                 % Convert units
                 
                 % Oe to mT
