@@ -43,8 +43,8 @@ MicroMag_Modern_Support = [16.002, 16, 15];
 Force_Encoding = 0;
 Txt_Info = feature('locale');
 if ~strcmp(Txt_Info.encoding, 'UTF-8')
-  Force_Encoding = 1;
-end  
+    Force_Encoding = 1;
+end
 
 % The number of files
 nfiles=length(files);
@@ -405,16 +405,42 @@ for ii = 1:1:nfiles
                 % Split the header to find the field and moment columns
                 SH = strsplit(Header, ',');
                 
+                % TODO - Rewrite this is a more sensible order
+                
                 Field_idx = find(cellfun(@(x) strcmpi(x, 'Field (Oe)'), SH)==1);
+                F_Unit_Flag = 2;
+                
                 if isempty(Field_idx)
                     % Different file version
                     Field_idx = find(cellfun(@(x) strcmpi(x, 'Magnetic Field (Oe)'), SH)==1);
                 end
                 
+                
+                if isempty(Field_idx)
+                    % Different file version
+                    Field_idx = find(cellfun(@(x) strcmpi(x, 'Magnetic Field (T)'), SH)==1);
+                    F_Unit_Flag = 1;
+                end
+                
+                               
+                if isempty(Field_idx)
+                    % Different file version
+                    Field_idx = find(cellfun(@(x) strcmpi(x, 'Magnetic Field (mT)'), SH)==1);
+                    F_Unit_Flag = 0;
+                end
+                
+                
+                
                 Moment_idx = find(cellfun(@(x) strcmpi(x, 'Long Moment (emu)'), SH)==1);
+                M_Unit_Flag = 1;
                 if isempty(Moment_idx)
                     % Different file version
                     Moment_idx = find(cellfun(@(x) strcmpi(x, 'Moment (emu)'), SH)==1);
+                end
+                if isempty(Moment_idx)
+                    % Different file version
+                    Moment_idx = find(cellfun(@(x) strcmpi(x, 'Moment (Am2)'), SH)==1);
+                    M_Unit_Flag = 0;
                 end
                 
                 
@@ -440,15 +466,27 @@ for ii = 1:1:nfiles
                 Bad_idx = any(isnan([Fields, Moments]),2);
                 Fields = Fields(~Bad_idx);
                 Moments = Moments(~Bad_idx);
-
+                
                 
                 % Convert units
+                switch F_Unit_Flag
+                    case 0
+                        % Do nothing in mT
+                    case 1
+                        % T to mT
+                        Fields = Fields./1e3;
+                    case 2
+                        % Oe to mT
+                        Fields = Fields./10;
+                end
                 
-                % Oe to mT
-                Fields = Fields./10;
-                
-                % emu to Am^2
-                Moments = Moments./1e3;
+                switch M_Unit_Flag
+                    case 0
+                        % Do nothing in Am2
+                    case 1
+                        % emu to Am^2
+                        Moments = Moments./1e3;
+                end
                 
                 % Some MPMS files records the inital moment acquisition
                 % Remove this by finding the first step where the fields decrease
@@ -697,7 +735,7 @@ for ii = 1:1:nfiles
                         % Reopen the file and reader the header line
                         if Force_Encoding == 1
                             FID = fopen(strcat(path, files{ii}),'r', 'n', 'UTF-8');
-                        else                           
+                        else
                             FID = fopen(strcat(path, files{ii}),'r');
                         end
                         
