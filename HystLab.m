@@ -130,12 +130,13 @@ if isempty(varargin)
     
     % Set data loaded status
     handles.Data_Loaded = 0;
+    handles.Cancel_Processing = 0;
     
-            handles.Stand_Alone = 1;
-        guidata(hObject, handles);
+    handles.Stand_Alone = 1;
+    guidata(hObject, handles);
     
 else
-        
+    
     
     % dontOpen = false;
     DataTransfer = find(strcmp(varargin, 'DataTransfer'));
@@ -166,9 +167,9 @@ else
     newH = currentPosition(4);
     set(hObject, 'Position', [newX, newY, newW, newH]);
         
-    % Set data loaded status
+    % Set data loaded and cancel flag status
     handles.Data_Loaded = 0;
-        
+    handles.Cancel_Processing = 0;
     
     % Check if data has been sent
     if exist('DataTransfer', 'var')
@@ -307,6 +308,8 @@ if Type == 0
     Processing_Parameters = NaN(nSpec, 14);
     Basis_Coeffs = cell(nSpec,2);
     
+    Bad_Spec = []; % Cell array to catch list of bad specimen name
+    
     for ii = 1:nSpec
         
         % Check for Cancel button press
@@ -339,21 +342,47 @@ if Type == 0
         
 % TODO - Tidy up this section
 
+
         catch
             % TODO - add more sophisticated error catch to allow other data
             % to be used even though only some cause problems
             
             % Delete the processing waitbar if in debug mode
-%             delete(h);
-%             keyboard
+            %             delete(h);
             
-            Error_Flag = 1;
-            Cancel_Flag = 1;
-            Error_MSG = [ {sprintf('%s could not be correctly processed.', handles.All_Names{ii} )};...
-                {'Processing aborted.'} ];
+            Bad_Spec = [Bad_Spec; handles.All_Names(ii) ]; %#ok<AGROW>
+            
+            a = size(handles.All_Data{ii},1);
+
+            Processed_Data(ii) = {NaN(a, 6)};
+            Uncorrected_Data(ii) = {NaN(floor(a/2), 7)};
+            Noise_Data(ii) = {NaN(floor(a/2), 3)};
+            Fitted_Data(ii) = {NaN(floor(a/2), 6)};
+            Data_Parameters(ii,:) = NaN(1,51);
+            Processing_Parameters(ii,:) = zeros(1,14);
+            Basis_Coeffs(ii,:) = cell(1,2);
+            
+            % Adjust some processing parameters to show no processing
+            Processing_Parameters(ii,2) = 1; % Drift correction
+            Processing_Parameters(ii,7) = 1; % Drift correction
             
         end % end try
         
+        
+    end
+    
+    % Warn of bad specimens
+    if ~isempty(Bad_Spec)
+        
+        Error_MSG = {'The following specimens could not be processed:'};
+        
+        for ii = 1:length(Bad_Spec)
+            Error_MSG(ii+1,1) = Bad_Spec(ii);
+        end
+        
+        Error_MSG(ii+2,1) = {'Please check the raw data plots, remove any bad data, and try reprocessing.'};
+        
+        warndlg(Error_MSG, 'Processing Failed', 'modal');
         
     end
     
@@ -416,7 +445,6 @@ elseif Type == 1
     
 else
     error('HystLab:Initial_Processing', 'Unrecognized type flag.');
-    
 end
 
 
@@ -804,9 +832,12 @@ set(handles.Stat_Mrs, 'String', sprintf('%2.2e', Data_Stats(6)/Normalizer));
 set(handles.Stat_Xhf, 'String', sprintf('%2.2e', Data_Stats(10)/Normalizer));
 
 
-
-% Update the plots
-Update_Plots(handles)
+try
+    % Update the plots
+    Update_Plots(handles)
+catch
+    % May fail if data are not properly loaded
+end
 
 
 % --- Update the plot axes
@@ -1301,10 +1332,39 @@ end
 
 spec_ind = handles.spec_ind;
 
+try
+    
+    [Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parameters, Processing_Parameters, Basis_Coeffs, Error_Flag] = Process_Hyst_Data({handles.Current_Raw_Loop}, handles.All_Data_Order(spec_ind),...
+        'Offset', Offset_Flag, 'Drift', Drift_Flag, 'Saturation', Sat_Flag, 'SaturationField', Sat_Field, 'FixedBeta_Flag', FixedBeta_Flag, 'FixedBeta_Val', FixedBeta_Val,...
+        'PoleSaturation', Pole_Sat_Flag, 'PoleData', [], 'Trim', Trim_Flag, 'TrimField', Trim_Field, 'FitEst', Fit_Est);
+    
+    
+catch
+    % TODO - add more sophisticated error catch to allow other data
+    % to be used even though only some cause problems
+    
+    Error_MSG = [ {sprintf('%s could not be correctly processed.', handles.All_Names{spec_ind} )};...
+        {'Please check the raw data plot, remove any bad data points, and try reprocessing.'}];
+    
+    warndlg(Error_MSG, 'Processing Failed', 'modal');
+    
+    Error_Flag = 1;
+%     a = size(handles.All_Data{ii},1);
+%     
+%     Processed_Data(ii) = {NaN(a, 6)};
+%     Uncorrected_Data(ii) = {NaN(floor(a/2), 7)};
+%     Noise_Data(ii) = {NaN(floor(a/2), 3)};
+%     Fitted_Data(ii) = {NaN(floor(a/2), 6)};
+%     Data_Parameters(ii,:) = NaN(1,51);
+%     Processing_Parameters(ii,:) = zeros(1,14);
+%     Basis_Coeffs(ii,:) = cell(1,2);
+%     
+%     % Adjust some processing parameters to show no processing
+%     Processing_Parameters(ii,2) = 1; % Drift correction
+%     Processing_Parameters(ii,7) = 1; % Drift correction
+    
+end
 
-[Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parameters, Processing_Parameters, Basis_Coeffs, Error_Flag] = Process_Hyst_Data({handles.Current_Raw_Loop}, handles.All_Data_Order(spec_ind),...
-    'Offset', Offset_Flag, 'Drift', Drift_Flag, 'Saturation', Sat_Flag, 'SaturationField', Sat_Field, 'FixedBeta_Flag', FixedBeta_Flag, 'FixedBeta_Val', FixedBeta_Val,...
-    'PoleSaturation', Pole_Sat_Flag, 'PoleData', [], 'Trim', Trim_Flag, 'TrimField', Trim_Field, 'FitEst', Fit_Est);
 
 %
 if Error_Flag ~= 0
@@ -2344,10 +2404,40 @@ elseif size(file,2) ~=0 % load and process
         return;
     end
     
+    % Warning of specimens with missing data
+    if any(cellfun(@isempty, Data))
+        Error_MSG = [{'The following specimens have no readable data:'};...
+            Specimen_Names(cellfun(@isempty, Data));...
+            {'These specimens cannot be displayed. Please check the data files.'}];
+        waitfor(warndlg(Error_MSG, 'Reading Failed', 'modal'));
+    end
+    
+    % Remove from the read data
+    Specimen_Names(cellfun(@isempty, Data)) = [];
+    Masses(cellfun(@isempty, Data)) = [];
+    Data_Order(cellfun(@isempty, Data)) = [];
+    Data(cellfun(@isempty, Data)) = [];
+    
+    if isempty(Data)
+        % All data removed so send a cancel processing flag to return
+        handles.Cancel_Processing = 1;
+    end
+    
+    
+    % Check for cancel flag and return exiting data if needed
+    if handles.Cancel_Processing == 1
+        % User canceled the processing
+        % Reset the cancel processing dlag
+        handles.Cancel_Processing = 0;
+        guidata(hObject, handles);
+        return;
+    end
+ 
     
     % Create/append the data
     if OW_Flag == 1
-        % Overwrite
+        % Overwrite existing data
+        
         tmp_handles = handles;
         tmp_handles.Data_Loaded = 0; % Reset for the call to Set_Initial
         tmp_handles.All_Names = Specimen_Names;
@@ -2358,11 +2448,7 @@ elseif size(file,2) ~=0 % load and process
         tmp_handles.Nspec = length(tmp_handles.All_Names);
         tmp_handles = Set_Initial_Data(tmp_handles, 0);
         
-        
-        if tmp_handles.Cancel_Processing == 1
-            % User cancelled so return
-            return;
-        end
+
         
         %         handles.Data_Loaded = 0; % Reset for the call to Set_Initial
         %         handles.All_Names = Specimen_Names;
@@ -2376,7 +2462,7 @@ elseif size(file,2) ~=0 % load and process
         
     else
         % Append new data to existing data
-        
+       
         % Put into temporary handle and get the default processing
         tmp.Data_Loaded = 1; % Reset for the call to Set_Initial
         tmp.All_Names = Specimen_Names;
@@ -2387,13 +2473,6 @@ elseif size(file,2) ~=0 % load and process
         tmp.Nspec = length(tmp.All_Names);
         tmp.spec_ind = handles.spec_ind;
         tmp = Set_Initial_Data(tmp, 0);
-        
-        if tmp.Cancel_Processing == 1
-            % User canceled the processing
-            handles.Cancel_Processing = 1;
-            guidata(hObject, handles);
-            return;
-        end
         
         handles.Cancel_Processing = 0;
         
@@ -2442,7 +2521,7 @@ if handles.Data_Loaded == 0
     return;
 end
 
-% Only one specimn so dpn't remove, return
+% Only one specimn so don't remove, return
 if handles.Nspec == 1
     MSG = {'Only 1 specimn is currently loaded.';...
         'Please load new data or quite the browser'};
