@@ -466,7 +466,7 @@ for ii = 1:1:nfiles
                 Bad_idx = any(isnan([Fields, Moments]),2);
                 
                 % This might be due to the moment being in the DC column
-                if length(Bad_idx) == length(Moments)
+                if sum(Bad_idx) == length(Moments)
                     Moment_idx = find(cellfun(@(x) strcmpi(x, 'DC Moment Fixed Ctr (emu)'), SH)==1);
                     Moments = cellfun(@str2double, data_input(:,Moment_idx));
                 end
