@@ -258,7 +258,7 @@ for ii = 1:1:nData
     if Order(ii) == -1
         % Flip the direction of the fields and moments
         Fields = -Fields;
-        Moments = -Moments;
+        Moments = -Moments; % TODO fix ordering
     end
     
     
@@ -654,7 +654,7 @@ for ii = 1:1:nData
     if Drift_Flag == 5 && isnan(Chi_Hat)
         warndlg([{'Paramagnetic correction cannot be applied.'},...
             {'Applying automatic correction.'}], 'Paramagnetic Correction', 'modal');
-            [Moment_Grid, Drift_Type, Drift_Ratio, DummyVar, DummyVar, Temp_Ratio] = Hyst_Drift_Correction(Field_Grid, Moment_Grid, 10, 1, Chi_Hat);
+        [Moment_Grid, Drift_Type, Drift_Ratio, DummyVar, DummyVar, Temp_Ratio] = Hyst_Drift_Correction(Field_Grid, Moment_Grid, 10, 1, Chi_Hat);
     else
         [Moment_Grid, Drift_Type, Drift_Ratio, DummyVar, DummyVar, Temp_Ratio] = Hyst_Drift_Correction(Field_Grid, Moment_Grid, 10, Drift_Flag, Chi_Hat);
     end
