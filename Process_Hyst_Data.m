@@ -520,95 +520,11 @@ for ii = 1:1:nData
     
     
     %% Regularize the data
-    %
-    % Either interpolate to grid of regularly spaced points or interpolate
-    % to the fields of the upper branch.
-    % In both cases we interpolate such that the fields of a single branch
-    % are symmetric about zero.
-    %
     
-    if Regularize_Fields_Flag == 1
-        % Interpolate onto a regular grid
-        % The value to round the field to
-        Fstep = mean([abs(diff(OFC_Top(:,1))); abs(diff(OFC_Bot(:,1)))]);
-        Field_Round = RoundField(Fstep);
+    [Field_Grid, Moment_Grid] = Regularize_Fields(OFC_Top, OFC_Bot, Regularize_Fields_Flag);
         
-        % Get the minimum field at the 4 field maxima
-        % This approach linear avoids extrapolation in the high field region
-        Max_Field = min([max(OFC_Top(:,1)), abs(min(OFC_Top(:,1))), max(OFC_Bot(:,1)), abs(min(OFC_Bot(:,1)))]);
-        Max_Field = floor(Max_Field/Field_Round)*Field_Round; % round down
-        
-        
-        % Down size the number of points to be restricted to the number of
-        % real data points measured in the field range of the grid
-        % We take this to be the minimum number from the upper or lower
-        % branches
-        npts_interp = min([sum(abs(OFC_Top(:,1)<=Max_Field)), sum(abs(OFC_Bot(:,1)<=Max_Field))]);
-        
-        %     if rem(npts_interp,2) == 0
-        %         % Subtract 1 point to make odd
-        %         % This ensures a zero field point
-        %         npts_interp = npts_interp -1;
-        %     end
-        
-        % Make the field grid
-        % Field_Grid = [Upper branch fields (+ to -), Lower branch fields (- to +)];
-        Field_Grid = [linspace(Max_Field, -Max_Field, npts_interp)', linspace(-Max_Field, Max_Field, npts_interp)'];
-        
-        % Interpolate the moments
-        % Moment_Grid = [Upper branch moments (+ to -), Lower branch moments (- to +)];
-        Moment_Grid = [ Interpolate_To_Field(OFC_Top(:,1), OFC_Top(:,2), Field_Grid(:,1), 'linear', 0), ...
-            Interpolate_To_Field(OFC_Bot(:,1), OFC_Bot(:,2), Field_Grid(:,2), 'linear', 0)];
-        
-    else
-        % Interpolate to the upper branch fields of the measured data
-        
-        % Split the upper branch into positive and neagive fields, invert
-        % the negative fields, and average with the positive fields
-        % These mean fields are used for interpolation
-        tmp_F1 = OFC_Top(OFC_Top(:,1)>0,1);
-        tmp_F2 = flipud(-OFC_Top(OFC_Top(:,1)<0,1));
-        nMin = min([length(tmp_F1), length(tmp_F2)]);
-        mean_Fields = mean([tmp_F1(1:nMin), tmp_F2(1:nMin)],2);
+    Max_Field = max(abs(Field_Grid(:,1)));
 
-        % Add in the zero field step or lowest absolute field if present, not used,
-        % and it doesn't add more data than was measured.
-        if any(mean_Fields == min(abs(OFC_Top(:,1)))) == 0
-            % Min field not used
-            if min(abs(OFC_Top(:,1))) == 0
-                % Min field is zero
-                if 4*length(mean_Fields)+2 <= length(OFC_Top(:,1))
-                    % Not adding in more data
-                    mean_Fields = [mean_Fields; min(abs(OFC_Top(:,1)))]; %#ok<AGROW>
-                end
-            else
-                if 4*(length(mean_Fields)+1) <= length(OFC_Top(:,1))
-                    % Not adding in more data
-                    mean_Fields = [mean_Fields; min(abs(OFC_Top(:,1)))]; %#ok<AGROW>
-                end
-            end
-        end
-        
-        % Make the field grid
-        % Field_Grid = [Upper branch fields (+ to -), Lower branch fields (- to +)];
-        if min(abs(mean_Fields)) == 0
-            % Don't over replicate the zero field step if present
-            Field_Grid = [[mean_Fields(1:end-1); flipud(-mean_Fields)], [-mean_Fields(1:end-1); flipud(mean_Fields)]];
-        else
-            Field_Grid = [[mean_Fields; flipud(-mean_Fields)], [-mean_Fields; flipud(mean_Fields)]];
-        end
-        
-        
-        % Interpolate the moments
-        % Moment_Grid = [Upper branch moments (+ to -), Lower branch moments (- to +)];
-        Moment_Grid = [ Interpolate_To_Field(OFC_Top(:,1), OFC_Top(:,2), Field_Grid(:,1), 'linear', 1), ...
-            Interpolate_To_Field(OFC_Bot(:,1), OFC_Bot(:,2), Field_Grid(:,2), 'linear', 1)];
-        
-        Max_Field = max(abs(Field_Grid(:,1)));
-        
-    end
-    
-    
     %% Do the drift correction
     
     % Check for exponetial drift correction
