@@ -35,7 +35,7 @@ function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(M
 %     doi: 10.1029/2018GC007620
 %
 %
-% Last Modified 2019/05/07
+% Last Modified 2021/05/27
 %
 
 %% Some input processing and defaults
@@ -299,8 +299,7 @@ else
     
     X0 = Data_LF/Model_LF;
     
-    rh_Scale = fminsearchbnd(scale_func, X0, 0);
-    
+    rh_Scale = fminsearchbnd(scale_func, X0, 0, max(Mrh)./max(Model_full));
     
 end
 
