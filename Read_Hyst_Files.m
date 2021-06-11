@@ -127,7 +127,10 @@ for ii = 1:1:nfiles
                     
                     Line1 = fgetl(FID);
                     
-                    Header = regexp(Line1, ',', 'split');
+                    % Decompose teh header line, firstly by free-text
+                    % variables in quotes, then by the comma delimiters
+                    H1 = regexp(Line1, '"', 'split');
+                    Header = [H1(1,2), regexp(H1{3}(2:end-1), ',', 'split'), H1(4), regexp(H1{5}(2:end-1), ',', 'split'), H1(6), regexp(H1{7}(2:end), ',', 'split')];
                     
                     File_Ver = str2double(Header{2});
                     
