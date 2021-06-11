@@ -4,9 +4,11 @@ function [Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parame
 %
 % Input:
 %       Data - cell containing the data to porcess [nData x 1] {nFields x 2}
+%
 %       Order - vector of flags for the data measurement order
 %               -1 - Negative to positive fields
 %                1 - Positive to negative fields
+%
 %       varargin - name/value paired data input
 %
 %       Drift - the flag for the drift correction
@@ -51,8 +53,11 @@ function [Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parame
 %                         on a regular field grid, with all applied
 %                         corrections [Fields(U,L), Upper, Lower, Mih, Mrh]
 %
-%        Uncorrected_Data - the measurement data placed on a regular field
-%                           grid [Fields(U,L), Top_curve, Bottom_Curve, Mih, Mrh]
+%        Uncorrected_Data - The minimally processed measurement data with upper and 
+%                           lower branches on the same field grid (interpolated to either
+%                           the upper or lower branch fields depending on which does 
+%                           not add points to the data
+%                           [Fields(U,L), Top_curve, Bottom_Curve, Mih, Mrh]
 %
 %        Fitted_Data - cell containing the fitted hysteresis loop
 %                         [Fields(U,L),Upper, Lower, Mih, Mrh]
@@ -96,7 +101,7 @@ function [Processed_Data, Uncorrected_Data, Noise_Data, Fitted_Data, Data_Parame
 % which runs on first input, but is stored for any other reanalysis
 %
 
-% Last Modified 2019/05/07
+% Last Modified 2021/06/011
 %
 
 %% Supress unwanted code analyzer warnings
@@ -278,7 +283,7 @@ for ii = 1:1:nData
     end
     
     % The number of data points
-    npts=length(Fields);
+    %npts = length(Fields);
     
     
     %% Do the pole saturation correction
@@ -311,92 +316,26 @@ for ii = 1:1:nData
     
     %% Split the loop into upper and lower branches
     
-    % TODO - split the loops more smartly?
-    % Currently this assumes symmetry, which after trunction, may not be
-    % true
+    [Top_Curve, Bot_Curve] = Split_Hyst_Loop(Fields, Moments);
     
-    % Get the indices for splitting the curves
-    Ind1 = npts/2;
-    Ind2 = npts/2;
-    
-    if rem(npts,2)
-        % odd number of points
-        % HystLab assumes that at opposite saturation the loop as a single point
-        % Remove teh point
-        % Ind1 = floor(Ind1);
-        % Ind2 = ceil(Ind2);
-        
-        % Duplicate point on both branches
-        Ind1 = floor(Ind1) + 1;
-        Ind2 = ceil(Ind2) - 1;
-    end
-    
-    
-    Top_Curve=[Fields(1:Ind1), Moments(1:Ind1)];
-    Bot_Curve=[Fields(Ind2+1:end), Moments(Ind2+1:end)];
 
-    % Sort the curves by field to ensure monotonic field sweeps
-    Top_Curve = sortrows(Top_Curve, -1);
-    Bot_Curve = sortrows(Bot_Curve, 1);
+    %% Get the minimally processed data
+    % Used for the "raw" Mih and Mrh curves
+    % Known as "Uncorrected_Data" for legacy reasons
+    % Uncorrected_Data - The minimally processed measurement data with upper and
+    %                    lower branches on the same field grid (interpolated to either
+    %                    the upper or lower branch fields depending on which does
+    %                    not add points to the data
+    %                    [Fields(U,L), Moments(U,L), Mih, Mrh, Noise]
+    %
     
-    % Average duplicate field data
-    % Top curve
-    if length(Top_Curve(:,1)) ~= length(unique(Top_Curve(:,1)))
-        
-        % Find indices that are duplicate
-        [unique_data, row_idx] = unique(Top_Curve(:,1),'first');
-        Duplicate_idx = find(not(ismember(1:numel(Top_Curve(:,1)),row_idx)));
-        
-        % Loop through and average the moments
-        for jj = 1: length(Duplicate_idx)
-            if Top_Curve(Duplicate_idx(jj)-1,1) == Top_Curve(Duplicate_idx(jj),1)
-                Top_Curve(Duplicate_idx(jj)-1,2) = mean([Top_Curve(Duplicate_idx(jj)-1,2),Top_Curve(Duplicate_idx(1),2)]);
-                
-                % Remove the excess data
-                Top_Curve(Duplicate_idx(jj),:) = [];
-            end
-        end
-        
+    % Regularize the fields
+    [Raw_Field_Grid, Raw_Moment_Grid] = Regularize_Fields(Top_Curve, Bot_Curve, 0);
+    
+    Uncorrected_Data(ii) = {[Raw_Field_Grid, Raw_Moment_Grid, (Raw_Moment_Grid(:,1) + flipud(Raw_Moment_Grid(:,2)))/2,...
+        (Raw_Moment_Grid(:,1) - flipud(Raw_Moment_Grid(:,2)))/2, Raw_Moment_Grid(:,1) + Raw_Moment_Grid(:,2)]};
+    
 
-    end
-    
-    % Bottom curve
-    if length(Bot_Curve(:,1)) ~= length(unique(Bot_Curve(:,1)))
-        
-        % Find indices that are duplicate
-        [unique_data, row_idx] = unique(Bot_Curve(:,1),'first');
-        Duplicate_idx = find(not(ismember(1:numel(Bot_Curve(:,1)),row_idx)));
-        
-        % Loop through and average the moments
-        for jj = 1: length(Duplicate_idx)
-            if Bot_Curve(Duplicate_idx(jj)-1,1) == Bot_Curve(Duplicate_idx(jj),1)
-                Bot_Curve(Duplicate_idx(jj)-1,2) = mean([Bot_Curve(Duplicate_idx(jj)-1,2), Bot_Curve(Duplicate_idx(1),2)]);
-                
-                % Remove the excess data
-                Bot_Curve(Duplicate_idx(jj),:) = [];
-            end
-        end
-        
-
-    end
-    
-    % Define the "Uncorrected" data, which is after averaging repeat fields, 
-    % trimming and pole saturation
-    
-    % Get the bottom branch interpolated to the top
-    Bot_interp = Interpolate_To_Field(Bot_Curve(:,1), Bot_Curve(:,2), Top_Curve(:,1), 'linear', 1);
-    Bot_inv_interp = Interpolate_To_Field(-Bot_Curve(:,1), -Bot_Curve(:,2), Top_Curve(:,1), 'linear', 1);
-    
-    Uncorrected_Data(ii) = {[ Top_Curve(:,1), Bot_Curve(:,1), Top_Curve(:,2), Bot_Curve(:,2),...
-        ( Top_Curve(:,2) + Bot_interp )./2, ( Top_Curve(:,2) - Bot_interp )./2, ( Top_Curve(:,2) - Bot_inv_interp ) ]} ;
-    
-    % Re-order the data to be from postive to negative saturation
-    if Order == -1
-        Uncorrected_Data(ii) = {[ -Top_Curve(:,1), -Bot_Curve(:,1), -Top_Curve(:,2), -Bot_Curve(:,2),...
-            ( -Top_Curve(:,2) + -Bot_interp )./2, ( Top_Curve(:,2) - Bot_interp )./2, ( -Top_Curve(:,2) - -Bot_inv_interp ) ]} ;
-    end
-    
-    
     %% Correct for offset
     
     % Get the top curve moment on unique fields
