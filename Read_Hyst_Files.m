@@ -1294,7 +1294,9 @@ for ii = 1:1:nfiles
         % close any open file handles
         fclose all;
         
-        Bad_Data(ii) = 0;
+        Bad_Data(ii) = 1;
+        
+        disp(lasterr)
         
     end
     
