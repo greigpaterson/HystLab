@@ -263,7 +263,7 @@ for ii = 1:1:nData
     if Order(ii) == -1
         % Flip the direction of the fields and moments
         Fields = -Fields;
-        Moments = -Moments; % TODO fix ordering
+        Moments = -Moments;
     end
     
     
@@ -535,41 +535,41 @@ for ii = 1:1:nData
     [Moment_Grid, SC_Output1, SC_Output2, SC_Error_Flag] = Slope_Correction(Field_Grid, Moment_Grid, Input_Params);
     
     % Check for error output
-    switch SC_Error_Flag 
+    switch SC_Error_Flag
         
         case 1
-        
-        MSG = {'Insufficient high-field data for slope correction above user selected field value.'; 'At least 3 data points per high-field segement are needed (a total of 12 data).';...
-            'The results may be poor, try again with more data points.'};
-        warndlg(MSG, 'Insufficient Data');
-        
-        Error_Flag = 1;
-        
-        Processed_Data = [];
-        Uncorrected_Data = [];
-        Noise_Data = [];
-        Fitted_Data = [];
-        Data_Parameters = [];
-        Processing_Parameters = [];
-        Basis_Coeffs = [];
-        return;
-        
+            
+            MSG = {'Insufficient high-field data for slope correction above user selected field value.'; 'At least 3 data points per high-field segement are needed (a total of 12 data).';...
+                'The results may be poor, try again with more data points.'};
+            warndlg(MSG, 'Insufficient Data');
+            
+            Error_Flag = 1;
+            
+            Processed_Data = [];
+            Uncorrected_Data = [];
+            Noise_Data = [];
+            Fitted_Data = [];
+            Data_Parameters = [];
+            Processing_Parameters = [];
+            Basis_Coeffs = [];
+            return;
+            
         case 2
             MSG = {'Approach to saturation calculation cannot be applied.'; 'The correction is poorly conditioned.';...
-            'Please select more high-field data points or apply another correction.'};
-        warndlg(MSG, 'Approach to Saturation Correction');
-        
-        Error_Flag = 1;
-        
-        Processed_Data = [];
-        Uncorrected_Data = [];
-        Noise_Data = [];
-        Fitted_Data = [];
-        Data_Parameters = [];
-        Processing_Parameters = [];
-        Basis_Coeffs = [];
-        return;
-        
+                'Please select more high-field data points or apply another correction.'};
+            warndlg(MSG, 'Approach to Saturation Correction');
+            
+            Error_Flag = 1;
+            
+            Processed_Data = [];
+            Uncorrected_Data = [];
+            Noise_Data = [];
+            Fitted_Data = [];
+            Data_Parameters = [];
+            Processing_Parameters = [];
+            Basis_Coeffs = [];
+            return;
+            
     end
     
     
@@ -958,18 +958,10 @@ for ii = 1:1:nData
     R2 = GetR2(tmp_Mrh1, tmp_Mrh2);
     Qrh(ii) = log10( 1 / sqrt((1-R2)) );
     
-    
     % Collate the data to return, reordering the data if needed
-    if Order(ii) == -1
-        Fitted_Data(ii) = {Fitting_Results};
-        Noise_Data(ii) = {[-Field_Grid(:,1), -Err_H, -Smooth_Err_H]};
-        Processed_Data(ii) = {[-Field_Grid, -Moment_Grid, -Mih, Mrh]};
-    else
-        Fitted_Data(ii) = {Fitting_Results};
-        Noise_Data(ii) = {[Field_Grid(:,1), Err_H, Smooth_Err_H]};
-        Processed_Data(ii) = {[Field_Grid, Moment_Grid, Mih, Mrh]};
-    end
-    
+    Fitted_Data(ii) = {Fitting_Results};
+    Noise_Data(ii) = {[Field_Grid(:,1), Err_H, Smooth_Err_H]};
+    Processed_Data(ii) = {[Field_Grid, Moment_Grid, Mih, Mrh]};
     
     Noise_RMS(ii) = sqrt(mean(Err_H.^2));
     
