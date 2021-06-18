@@ -125,7 +125,7 @@ if length(Top_Curve(:,1)) ~= length(unique(Top_Curve(:,1)))
     % Loop through and average the moments
     for jj = 1: length(Duplicate_idx)
         if Top_Curve(Duplicate_idx(jj)-1,1) == Top_Curve(Duplicate_idx(jj),1)
-            Top_Curve(Duplicate_idx(jj)-1,2) = mean([Top_Curve(Duplicate_idx(jj)-1,2),Top_Curve(Duplicate_idx(1),2)]);
+            Top_Curve(Duplicate_idx(jj)-1,2) = mean([Top_Curve(Duplicate_idx(jj)-1,2),Top_Curve(Duplicate_idx(jj),2)]);
         end
     end
     
@@ -144,7 +144,7 @@ if length(Bot_Curve(:,1)) ~= length(unique(Bot_Curve(:,1)))
     % Loop through and average the moments
     for jj = 1: length(Duplicate_idx)
         if Bot_Curve(Duplicate_idx(jj)-1,1) == Bot_Curve(Duplicate_idx(jj),1)
-            Bot_Curve(Duplicate_idx(jj)-1,2) = mean([Bot_Curve(Duplicate_idx(jj)-1,2), Bot_Curve(Duplicate_idx(1),2)]);
+            Bot_Curve(Duplicate_idx(jj)-1,2) = mean([Bot_Curve(Duplicate_idx(jj)-1,2), Bot_Curve(Duplicate_idx(jj),2)]);
         end
     end
     
