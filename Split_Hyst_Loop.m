@@ -31,7 +31,7 @@ function [Top_Curve, Bot_Curve] = Split_Hyst_Loop(Fields, Moments)
 %                           [Fields(U,L), Top_curve, Bottom_Curve, Mih, Mrh, Noise]
 %
 %
-% Last Modified 2021/06/11
+% Last Modified 2021/06/18
 %
 
 %% Supress unwanted code analyzer warnings

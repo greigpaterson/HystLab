@@ -22,7 +22,7 @@ function varargout = HystLab(varargin)
 
 % Edit the above text to modify the response to help HystLab
 
-% Last Modified 2019/11/06
+% Last Modified 2021/06/18
 %
 
 % Begin initialization code - DO NOT EDIT
@@ -62,8 +62,8 @@ handles.Version = str2double(Ver.Version);
 
 % TODO - Update version number and date to read from a file
 % Stops having to update this main function for fixes elsewhere
-handles.HystLab_Version = '1.0.10';
-handles.HystLab_Date = 'November, 2020';
+handles.HystLab_Version = '1.1.0';
+handles.HystLab_Date = 'June, 2021';
 
 % Get the screen dpi
 set(0, 'Units', 'Pixels');

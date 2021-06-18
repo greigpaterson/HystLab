@@ -28,7 +28,7 @@ function [Specimen_Names, Data, Specimen_Masses, Data_Order] = Read_Hyst_Files(p
 % TODO - Add reads for dates and timestamps for future MagIC proofing
 %
 
-% Last Modified 2021/06/20
+% Last Modified 2021/06/18
 %
 
 %% Inital processing
