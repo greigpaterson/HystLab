@@ -94,11 +94,11 @@ switch length(Min_idx)
     otherwise
         % split based on odd/even points
         if rem(length(Min_idx),2)
-            % Even
-            Min_idx = Min_idx( length(Min_idx)/2 );
+            % Odd
+            Min_idx = Min_idx( ceil(length(Min_idx)/2) );
         else
-            % odd
-            Min_idx = Min_idx( ceil( length(Min_idx)/2 ) );
+            % even
+            Min_idx = Min_idx( length(Min_idx)/2 );
         end
 end
 
@@ -126,11 +126,11 @@ if length(Top_Curve(:,1)) ~= length(unique(Top_Curve(:,1)))
     for jj = 1: length(Duplicate_idx)
         if Top_Curve(Duplicate_idx(jj)-1,1) == Top_Curve(Duplicate_idx(jj),1)
             Top_Curve(Duplicate_idx(jj)-1,2) = mean([Top_Curve(Duplicate_idx(jj)-1,2),Top_Curve(Duplicate_idx(1),2)]);
-            
-            % Remove the excess data
-            Top_Curve(Duplicate_idx(jj),:) = [];
         end
     end
+    
+    % Remove the excess data
+    Top_Curve(Duplicate_idx,:) = [];
     
 end
 
@@ -145,11 +145,11 @@ if length(Bot_Curve(:,1)) ~= length(unique(Bot_Curve(:,1)))
     for jj = 1: length(Duplicate_idx)
         if Bot_Curve(Duplicate_idx(jj)-1,1) == Bot_Curve(Duplicate_idx(jj),1)
             Bot_Curve(Duplicate_idx(jj)-1,2) = mean([Bot_Curve(Duplicate_idx(jj)-1,2), Bot_Curve(Duplicate_idx(1),2)]);
-            
-            % Remove the excess data
-            Bot_Curve(Duplicate_idx(jj),:) = [];
         end
     end
+    
+    % Remove the excess data
+    Bot_Curve(Duplicate_idx,:) = [];
     
 end
 
