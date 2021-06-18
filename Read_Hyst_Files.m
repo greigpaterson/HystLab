@@ -11,8 +11,11 @@ function [Specimen_Names, Data, Specimen_Masses, Data_Order] = Read_Hyst_Files(p
 %                   2 - Quantum Designs MPMS
 %                   3 - VFTB
 %                   4 - Lake Shore VSMs
-%                   5 - MagIC
+%                   5 - MagIC (NOT IMPLEMENTED)
 %                   6 - MicroSense VSM
+%                   7 - Generic 2 Column
+%                   8 - MolSpin VSM
+%                   9 - Coercivity Meter
 %
 % Output:
 %       Specimen_Names - The names of the loaded specimens
@@ -25,7 +28,7 @@ function [Specimen_Names, Data, Specimen_Masses, Data_Order] = Read_Hyst_Files(p
 % TODO - Add reads for dates and timestamps for future MagIC proofing
 %
 
-% Last Modified 2019/05/07
+% Last Modified 2021/06/20
 %
 
 %% Inital processing
@@ -425,7 +428,7 @@ for ii = 1:1:nfiles
                     F_Unit_Flag = 1;
                 end
                 
-                               
+                
                 if isempty(Field_idx)
                     % Different file version
                     Field_idx = find(cellfun(@(x) strcmpi(x, 'Magnetic Field (mT)'), SH)==1);
@@ -473,13 +476,13 @@ for ii = 1:1:nfiles
                     Moment_idx = find(cellfun(@(x) strcmpi(x, 'DC Moment Fixed Ctr (emu)'), SH)==1);
                     Moments = cellfun(@str2double, data_input(:,Moment_idx));
                 end
-
-                                % Check again for missing values to remove
+                
+                % Check again for missing values to remove
                 Bad_idx = any(isnan([Fields, Moments]),2);
                 Fields = Fields(~Bad_idx);
                 Moments = Moments(~Bad_idx);
                 
-                                
+                
                 % Convert units
                 switch F_Unit_Flag
                     case 0
@@ -1262,6 +1265,92 @@ for ii = 1:1:nfiles
                 Moments = Moments(1:idx);
                 
                 
+            case 9 % Coercivity Meter
+                
+                % Based on 2 examples files with cgs units only
+                % Units are Oe and emu
+                
+                % Mass is not recorded in the data file
+                Mass = NaN;
+                
+                % Read and split the data
+                data_input = textscan(FID, '%f %f %f', 'HeaderLines', 2);
+                
+                Fields = data_input{1};
+                
+                % Data are separated as remanent and induced moments so sum
+                % for total moment
+                Moments = data_input{2} + data_input{3};
+                
+                % Convert units
+                % Oe to mT
+                Fields = Fields./10;
+                
+                % emu to Am^2
+                Moments = Moments./1e3;
+                
+                % The Coercivity Meter records the inital moment acquisition
+                % Remove this by finding the first step where the fields decrease
+                dF = diff(Fields);
+                ddF = diff(sign(dF));
+                
+                switch sum(ddF~=0)
+                    
+                    case 0
+                        % All fields are the same
+                        error('Read_Hyst_Files:Coercivity_Meter', 'All fields are idetical. Please please check data file %s.', files{ii});
+                        
+                    case 1
+                        % All is good - do nothing
+                        
+                    case 2
+                        % We have 3 segments
+                        % Assume we have intial moment curve
+                        
+                        idx = find(ddF~=0); % indices of sign change
+                        
+                        % Get the intial curve
+                        Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
+                        
+                        % Remove inital curve
+                        Fields(1:idx(1)) = [];
+                        Moments(1:idx(1)) =[];
+                        
+                        
+                    otherwise
+                        
+                        if sum(ddF~=0) > 2
+                            % Multiple sign changes
+                            % Either noisy or has replicate fields
+                            % Assume first change is a maximum field
+                            
+                            idx = find(ddF~=0);
+                            
+                            if (Fields(idx(1)+1)) ~= max(Fields)
+                                % Don't deal with this case yet
+                                error('Read_Hyst_Files:Coercivity_Meter', 'Unable to clearly separate initial curve. Please contact the authors.');
+                            end
+                            
+                            % Get the intial curve
+                            Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
+                            
+                            %
+                            % Remove inital curve
+                            Fields(1:idx(1)) = [];
+                            Moments(1:idx(1)) =[];
+                            
+                            
+                        else
+                            error('Read_Hyst_Files:Coercivity_Meter', 'Unrecognized measurement sequence. Please contact the authors.');
+                        end
+                end
+                
+                
+                % Coercivity meter only records the upper branch
+                % Need to duplicate, invert and add on
+                Fields = [Fields; -Fields]; %#ok<AGROW>
+                Moments = [Moments; -Moments]; %#ok<AGROW>
+                
                 
             otherwise
                 error('Read_Hyst_Files:File_Type', 'The file type flag is unrecognized');
@@ -1290,13 +1379,14 @@ for ii = 1:1:nfiles
         
         Specimen_Masses(ii) = Mass;
         
-    catch
+    catch Read_Err
         % close any open file handles
         fclose all;
         
         Bad_Data(ii) = 1;
         
-        disp(lasterr)
+        rethrow(Read_Err);
+        %disp(lasterr)
         
     end
     
