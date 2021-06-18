@@ -180,6 +180,8 @@ if strcmpi(handles.File_Type_Flag, 'Other')
             handles.File_Type_Flag = 7;
         case 'MolSpin VSM'
             handles.File_Type_Flag = 8;
+        case 'Coercivity Meter'
+            handles.File_Type_Flag = 9;
         otherwise
             disp('Still to add');
             return;
