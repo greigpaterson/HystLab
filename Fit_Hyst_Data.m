@@ -1,4 +1,4 @@
-function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(Moments, Fields)
+function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(Moments, Fields, Linear_p)
 %
 % Function to fit Mih and Mrh curves using hyperbolic and logistic
 % functions following the procedures of [1-3]
@@ -10,6 +10,8 @@ function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(M
 %                 sweeping negative to postive fields
 %
 %       Fields - The gridded fields (only one sweep, positive to negative)
+%
+%       Linear_p - The p-value of the linear goodness-of-fit test
 %
 % Output:
 %        Fitted_Data - Fitted hysteresis loop using the gridded data [nField x 5]
@@ -40,9 +42,11 @@ function [Fitted_Data, Basis_Coeffs, P, Fit_F, Fit_p, Fit_RMS] = Fit_Hyst_Data(M
 
 %% Some input processing and defaults
 
-if nargin < 2
+if nargin < 3
     error('Fit_Hyst_Data:Input', 'At least 2 input arguments are required.')
 end
+
+
 
 % Reinterpolate the moments to ensure there is a zero field step
 % This ensures that better fitting as zero field IH curves are zero, and RH
@@ -100,6 +104,81 @@ tmp_Mrh2 = flipud(Mrh(Fields < 0));
 R2 = GetR2(tmp_Mrh1, tmp_Mrh2);
 Qrh = log10( 1 / sqrt((1-R2)) );
 
+
+%% Check for simple linear fit first
+
+if Linear_p >= 0.05
+    
+    % Assumes a zero Mrh line and linear fit to Mih curve only
+    fit_func = @(a) sum( ( a.*Pos_Fields' - IH ).^2 );
+    lin_coeff = fminsearchbnd(fit_func, mean(IH)./mean(Pos_Fields));
+    
+    Model_IH = lin_coeff.*Pos_Fields';
+    Model_RH = zeros(size(Pos_Fields'));
+    
+    % Create a matrix of the basis coefficients
+    Basis_Coeffs_ih(1,1) = 3*sign(lin_coeff); % Indices for the type of basis
+    Basis_Coeffs_ih(1,2) = 1';
+    Basis_Coeffs_ih(1,3:4) = [ lin_coeff,0; ];
+    
+    Basis_Coeffs_rh(1,1) = 0*sign(lin_coeff); % Indices for the type of basis
+    Basis_Coeffs_rh(1,2) = 1';
+    Basis_Coeffs_rh(1,3:4) = [ 0,0; ];
+    
+    % The total number of basis functions used
+    P = size(Basis_Coeffs_ih,1) + size(Basis_Coeffs_rh,1);
+    
+    Basis_Coeffs = [{Basis_Coeffs_ih}, {Basis_Coeffs_rh}];
+    
+    
+    % Get the modeled data to return  
+    if any(Fields == 0)
+        % Stop the zero field step being doubled
+        Mv = [[fliplr(-Model_IH)'; Model_IH(2:end)'], [fliplr(Model_RH)'; Model_RH(2:end)'] ];
+    else
+        Mv = [[fliplr(-Model_IH)'; Model_IH(1:end)'], [fliplr(Model_RH)'; Model_RH(1:end)'] ];
+    end
+    
+    Top_Curve = Mv(:,1) + Mv(:,2);
+    Bot_Curve = Mv(:,1) - Mv(:,2);
+    
+    
+    % Flip to keep the correct field ordering
+    Mv = flipud(Mv);
+    
+    if any(Fields == 0)
+        % Stop the zero field step being doubled
+        Full_Fields = [flipud(-Pos_Fields); Pos_Fields(2:end)];
+    else
+        Full_Fields = [flipud(-Pos_Fields); Pos_Fields(1:end)];
+    end
+    
+    Fitted_Data = [ flipud(Full_Fields), Full_Fields, flipud(Top_Curve), Bot_Curve, Mv ];
+    
+    M = [Moments(:,1); -Moments(:,2)];
+    
+    if exist('Old_Fields', 'var')
+        % Reinterpolate to the input fields if needed
+        tmp_Fit = NaN(length(Old_Fields), 6);
+        tmp_Fit(:,1:2) = [Old_Fields, -Old_Fields];
+        tmp_Fit(:,[3,5,6]) = interp1(Fitted_Data(:,1), Fitted_Data(:,[3,5,6]), tmp_Fit(:,1));
+        tmp_Fit(:,4) = interp1(Fitted_Data(:,2), Fitted_Data(:,4), tmp_Fit(:,2));
+        
+        Fitted_Data = tmp_Fit;
+        M = [Old_Moments(:,1); -Old_Moments(:,2)];
+    end
+    
+    % The modeled moments
+    Mhat = [Fitted_Data(:,3); -Fitted_Data(:,4)];
+    
+    % Fit RMS
+    Fit_RMS = sqrt( mean( (M(:) - Mhat(:)).^2 ) );
+    
+    [Fit_p, Fit_F] = Get_F_Test(M, Mhat, P, 1);
+      
+    return;
+    
+end
 
 
 %% Define some paramters for fitting, normalization etc
@@ -196,9 +275,9 @@ else
         Brh_m =  interp1(interp_array(:,2), interp_array(:,1), pcts, 'pchip');
         
     else
-    
+        
         Brh_m =  interp1(RH_norm, tmp_Fields, pcts, 'pchip');
-    
+        
     end
     
     b_rh = log( Lrh - 1 ) ./ Brh_m;
@@ -210,12 +289,12 @@ else
     
     % The basis function for the Mrh curves
     sig2_Basis = NaN(nBasis, length(Pos_Fields));
-    sech_Basis = NaN(nBasis, length(Pos_Fields));    
+    sech_Basis = NaN(nBasis, length(Pos_Fields));
     
     for ii = 1:nBasis
         sig2_Basis(ii,:) = 1 + -1./ (1 + exp(-b_rh(ii).*(Pos_Fields - Brh_m(ii)) ) );  % A = 1, C = 0
         sech_Basis(ii,:) = (sech(s(ii).*Pos_Fields)-sech(s(ii).*MaxField))./(1-sech(s(ii).*MaxField));
-    end   
+    end
     
     
     % Combine the basis functions
@@ -263,7 +342,7 @@ else
             break;
         end
         
-                
+        
         % Recalculate the abundances
         rh_Basis2(Zero_inds,:) = [];
         Abunds_rh = SUNSAL(RH2, rh_Basis2);
@@ -393,7 +472,7 @@ Basis_ih = [ sig1_Basis; tanh_Basis; linspace(0, 1, length(Pos_Fields)); linspac
 % keyboard
 
 
-    % Find the IH basis contributions
+% Find the IH basis contributions
 
 % Normalize to sum to one to get the abundances
 IH2 = IH./sum(IH);

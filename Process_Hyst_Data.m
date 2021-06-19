@@ -593,7 +593,7 @@ for ii = 1:1:nData
     %% Fit/Filter the data
     
     % Get the fit to the data
-    [Fitting_Results, Basis_Coeffs(ii,:), Nfit(ii), Fit_F(ii), Fit_p(ii), Fit_RMS(ii)] = Fit_Hyst_Data(Moment_Grid, Field_Grid(:,1));
+    [Fitting_Results, Basis_Coeffs(ii,:), Nfit(ii), Fit_F(ii), Fit_p(ii), Fit_RMS(ii)] = Fit_Hyst_Data(Moment_Grid, Field_Grid(:,1), Linear_p(ii));
     
     % redo the slope correction if needed
     if Fit_Param_Flag == 1
