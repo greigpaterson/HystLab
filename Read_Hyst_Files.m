@@ -514,79 +514,9 @@ for ii = 1:1:nfiles
                         Moments = Moments./1e3;
                 end
                 
-                % Some MPMS files records the inital moment acquisition
-                % Remove this by finding the first step where the fields decrease
-                dF = diff(Fields);
-                ddF = diff(sign(dF));
                 
-                switch sum(ddF~=0)
-                    
-                    case 0
-                        % All fields are the same
-                        error('Read_Hyst_Files:MPMS', 'All fields are idetical. Please please check data file %s.', files{ii});
-                        
-                    case 1
-                        % All is good - do nothing
-                        
-                    case 2
-                        % We have 3 segments
-                        
-                        % Check not numerical error
-                        % Check intial field is near peak field
-                        if abs(Fields(1)) >= 0.75*max(abs(Fields))
-                            
-                            
-                        else
-                            
-                            % Not exhaustive checks
-                            % TODO - Add more checks
-                            % TODO - Create separate function to detect intial
-                            % loops consistently across formats
-                            
-                            % Otherwise assume we have intial moment curve
-                            
-                            idx = find(ddF~=0); % indices of sign change
-                            
-                            % Get the intial curve
-                            Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
-                            
-                            % Remove inital curve
-                            Fields(1:idx(1)) = [];
-                            Moments(1:idx(1)) =[];
-                            
-                        end
-                        
-                    otherwise
-                        % Duplicate field measurements are present we will
-                        % land here
-                        % Until we have clear examples of both initial
-                        % curves and hysteresis loops with replicate
-                        % fields we will just let these data through as is
-                        % error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
-                        
-                        
-                        if sum(ddF~=0) > 2
-                            % Multiple sign changes
-                            % Either noisy or has replicate fields
-                            % Assume first change at maximum field is the
-                            % one we want
-                            
-                            idx = find(ddF~=0);
-                            max_idx = 1 + idx(find(Fields(idx+1)==max(Fields), 1, 'first'));
-
-                            % Get the intial curve
-                            Initial_Mag_Data = [Fields(1: max_idx), Moments(1:max_idx)]; %#ok<NASGU>
-                            
-                            % Remove inital curve
-                            % Keeping the maximum field for the loop
-                            Fields(1:(max_idx-1)) = [];
-                            Moments(1:(max_idx-1)) =[];
-                            
-                            
-                        else
-                            error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
-                        end
-                end
+                % Check for and remove the initial magnetization data
+                [Fields, Moments, Initial_Mag_Data] = Remove_Initial_Loop(Fields, Moments, 'MPMS', files{ii});
                 
                 
             case 3 % VFTB
@@ -747,36 +677,9 @@ for ii = 1:1:nfiles
                         error('Read_Hyst_Files:VFTB_Moment', 'Unrecognized moment units: %s.', Moment_Unit);
                 end
                 
-                % The VFTB records the inital moment acquisition
-                % Remove this by finding the first step where the fields decrease
-                dF = diff(Fields);
-                ddF = diff(sign(dF));
                 
-                switch sum(ddF~=0)
-                    
-                    case 0
-                        % All fields are the same
-                        error('Read_Hyst_Files:VFTB', 'All fields are idetical. Please please check data file %s.', files{ii});
-                        
-                    case 1
-                        % All is good - do nothing
-                        
-                    case 2
-                        % We have 3 segments
-                        % Assume we have intial moment curve
-                        
-                        idx = find(ddF~=0); % indices of sign change
-                        
-                        % Get the intial curve
-                        Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
-                        
-                        % Remove inital curve
-                        Fields(1:idx(1)) = [];
-                        Moments(1:idx(1)) =[];
-                        
-                    otherwise
-                        error('Read_Hyst_Files:VFTB', 'Unrecognized measurement sequence. Please contact the authors.');
-                end
+                % Check for and remove the initial magnetization data
+                [Fields, Moments, Initial_Mag_Data] = Remove_Initial_Loop(Fields, Moments, 'VFTB', files{ii});
                 
                 
             case 4 % Lake Shore
@@ -1087,36 +990,9 @@ for ii = 1:1:nfiles
                         end
                         
                         
-                        % Process the data to check for inital moment
-                        dF = diff(Fields);
-                        ddF = diff(sign(dF));
-                        
-                        switch sum(ddF~=0)
-                            
-                            case 0
-                                % All fields are the same
-                                error('Read_Hyst_Files:IDEAS_VSM_Measurement', 'All fields are idetical. Please please check data file %s.', files{ii});
-                                
-                            case 1
-                                % All is good - do nothing
-                                
-                            case 2
-                                % We have 3 segments
-                                % Assume we have intial moment curve
-                                
-                                idx = find(ddF~=0); % indices of sign change
-                                
-                                % Get the intial curve
-                                Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
-                                
-                                % Remove inital curve
-                                Fields(1:idx(1)) = [];
-                                Moments(1:idx(1)) =[];
-                                
-                            otherwise
-                                error('Read_Hyst_Files:IDEAS_VSM_Measurement', 'Unrecognized measurement sequence. Please contact the authors.');
-                        end
-                        
+                        % Check for and remove the initial magnetization data
+                        [Fields, Moments, Initial_Mag_Data] = Remove_Initial_Loop(Fields, Moments, 'IDEAS_VSM_Measurement', files{ii});
+
                         
                         % Check the rest of the file for mass
                         tline = fgetl(FID);
@@ -1338,62 +1214,10 @@ for ii = 1:1:nfiles
                 % emu to Am^2
                 Moments = Moments./1e3;
                 
-                % The Coercivity Meter records the inital moment acquisition
-                % Remove this by finding the first step where the fields decrease
-                dF = diff(Fields);
-                ddF = diff(sign(dF));
                 
-                switch sum(ddF~=0)
-                    
-                    case 0
-                        % All fields are the same
-                        error('Read_Hyst_Files:Coercivity_Meter', 'All fields are idetical. Please please check data file %s.', files{ii});
-                        
-                    case 1
-                        % All is good - do nothing
-                        
-                    case 2
-                        % We have 3 segments
-                        % Assume we have intial moment curve
-                        
-                        idx = find(ddF~=0); % indices of sign change
-                        
-                        % Get the intial curve
-                        Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
-                        
-                        % Remove inital curve
-                        Fields(1:idx(1)) = [];
-                        Moments(1:idx(1)) =[];
-                        
-                        
-                    otherwise
-                        
-                        if sum(ddF~=0) > 2
-                            % Multiple sign changes
-                            % Either noisy or has replicate fields
-                            % Assume first change is a maximum field
-                            
-                            idx = find(ddF~=0);
-                            
-                            if (Fields(idx(1)+1)) ~= max(Fields)
-                                % Don't deal with this case yet
-                                error('Read_Hyst_Files:Coercivity_Meter', 'Unable to clearly separate initial curve. Please contact the authors.');
-                            end
-                            
-                            % Get the intial curve
-                            Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
-                            
-                            %
-                            % Remove inital curve
-                            Fields(1:idx(1)) = [];
-                            Moments(1:idx(1)) =[];
-                            
-                            
-                        else
-                            error('Read_Hyst_Files:Coercivity_Meter', 'Unrecognized measurement sequence. Please contact the authors.');
-                        end
-                end
-                
+                % Check for and remove the initial magnetization data
+                [Fields, Moments, Initial_Mag_Data] = Remove_Initial_Loop(Fields, Moments, 'Coercivity_Meter', files{ii});
+
                 
                 % Coercivity meter only records the upper branch
                 % Need to duplicate, invert and add on
