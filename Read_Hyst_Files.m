@@ -442,10 +442,21 @@ for ii = 1:1:nfiles
                 if isempty(Moment_idx)
                     % Different file version
                     Moment_idx = find(cellfun(@(x) strcmpi(x, 'Moment (emu)'), SH)==1);
+                    M_Unit_Flag = 1;
                 end
                 if isempty(Moment_idx)
                     % Different file version
                     Moment_idx = find(cellfun(@(x) strcmpi(x, 'Moment (Am2)'), SH)==1);
+                    M_Unit_Flag = 0;
+                end
+                if isempty(Moment_idx)
+                    % Different file version
+                    Moment_idx = find(cellfun(@(x) strcmpi(x, 'Avg. Moment (emu)'), SH)==1);
+                    M_Unit_Flag = 1;
+                end
+                if isempty(Moment_idx)
+                    % Different file version
+                    Moment_idx = find(cellfun(@(x) strcmpi(x, 'Avg. Moment (Am2)'), SH)==1);
                     M_Unit_Flag = 0;
                 end
                 
