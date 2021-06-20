@@ -530,16 +530,31 @@ for ii = 1:1:nfiles
                         
                     case 2
                         % We have 3 segments
-                        % Assume we have intial moment curve
                         
-                        idx = find(ddF~=0); % indices of sign change
-                        
-                        % Get the intial curve
-                        Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
-                        
-                        % Remove inital curve
-                        Fields(1:idx(1)) = [];
-                        Moments(1:idx(1)) =[];
+                        % Check not numerical error
+                        % Check intial field is near peak field
+                        if abs(Fields(1)) >= 0.75*max(abs(Fields))
+                            
+                            
+                        else
+                            
+                            % Not exhaustive checks
+                            % TODO - Add more checks
+                            % TODO - Create separate function to detect intial
+                            % loops consistently across formats
+                            
+                            % Otherwise assume we have intial moment curve
+                            
+                            idx = find(ddF~=0); % indices of sign change
+                            
+                            % Get the intial curve
+                            Initial_Mag_Data = [Fields(1:idx(1)), Moments(1:idx(1))]; %#ok<NASGU>
+                            
+                            % Remove inital curve
+                            Fields(1:idx(1)) = [];
+                            Moments(1:idx(1)) =[];
+                            
+                        end
                         
                     otherwise
                         % Duplicate field measurements are present we will
@@ -548,6 +563,29 @@ for ii = 1:1:nfiles
                         % curves and hysteresis loops with replicate
                         % fields we will just let these data through as is
                         % error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
+                        
+                        
+                        if sum(ddF~=0) > 2
+                            % Multiple sign changes
+                            % Either noisy or has replicate fields
+                            % Assume first change at maximum field is the
+                            % one we want
+                            
+                            idx = find(ddF~=0);
+                            max_idx = 1 + idx(find(Fields(idx+1)==max(Fields), 1, 'first'));
+
+                            % Get the intial curve
+                            Initial_Mag_Data = [Fields(1: max_idx), Moments(1:max_idx)]; %#ok<NASGU>
+                            
+                            % Remove inital curve
+                            % Keeping the maximum field for the loop
+                            Fields(1:(max_idx-1)) = [];
+                            Moments(1:(max_idx-1)) =[];
+                            
+                            
+                        else
+                            error('Read_Hyst_Files:MPMS', 'Unrecognized measurement sequence. Please contact the authors.');
+                        end
                 end
                 
                 
