@@ -1,4 +1,4 @@
-function Save_HystLab_Stats(Names, Masses, Stats, Params, file, path)
+function Save_HystLab_Stats(Names, Masses, Stats, Params, file, path, HystLab_Version)
 %
 % Function to save the hysteresis statistic and processing parameters to a
 % tab delimited text file
@@ -163,18 +163,18 @@ end
 
 
 % Create the header line and format
-Final_Header = [{'Specimen ID'}, {'Mass [mg]'}, Print_Stat_Names, Print_Param_Names];
+Final_Header = [{'Specimen ID'}, {'Mass [mg]'}, Print_Stat_Names, Print_Param_Names, {'Software Version'}];
 nHead = length(Final_Header);
 Header_Format = repmat('%s\t', 1, nHead);
 Header_Format(end-1:end) = []; % remove the trailing '\t'
 Header_Format = strcat(Header_Format, '\n');
 
 % Combine the formats
-Final_Format = strjoin([{'%s'}, {'%3.3f'}, Print_Stat_Format, Print_Param_Format], '\\t');
+Final_Format = strjoin([{'%s'}, {'%3.3f'}, Print_Stat_Format, Print_Param_Format, {'%s'}], '\\t');
 Final_Format = strcat(Final_Format, '\n');
 
 % Combine the final data
-Final_Data = [Names, num2cell(Masses), Print_Stats, Print_Params]';
+Final_Data = [Names, num2cell(Masses), Print_Stats, Print_Params, repmat({['v',HystLab_Version]}, nSpec, 1)]';
 
 
 

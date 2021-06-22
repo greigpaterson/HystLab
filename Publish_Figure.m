@@ -96,7 +96,7 @@ for ii = 1:nPlot
     
     % Reset the line widths and any text handles
     C = get(newAxes, 'Children');
-    for jj = 1: length(C);
+    for jj = 1: length(C)
         
         tmp_hand = get(C(jj));
         

@@ -2222,7 +2222,7 @@ if ~ischar(file) && file==0
     return;
 end
 
-Save_HystLab_Stats(handles.All_Names, handles.All_Masses, handles.All_Data_Parameters, handles.All_Processing_Parameters, file, path);
+Save_HystLab_Stats(handles.All_Names, handles.All_Masses, handles.All_Data_Parameters, handles.All_Processing_Parameters, file, path, handles.HystLab_Version);
 
 
 % --------------------------------------------------------------------
