@@ -39,7 +39,7 @@ function [Specimen_Names, Data, Specimen_Masses, Data_Order] = Read_Hyst_Files(p
 % NOTE: Legacy version -1, and 0 carry no version number, the version
 % number read is actually reading the configuration (i.e., VSM or AGM)
 MicroMag_Legacy_Support = [-1, 0, 6, 8, 9];
-MicroMag_Modern_Support = [16.002, 16, 15];
+MicroMag_Modern_Support = [16.002, 16.001, 16, 15];
 
 
 % Get info on the text encoding
@@ -275,7 +275,7 @@ for ii = 1:1:nfiles
                     
                     
                     % Version check for the header lines on the script
-                    if any(File_Ver==[16.002 16])
+                    if any(File_Ver==[16.002 16.001 16])
                         nHeader_seg = 2;
                     elseif any(File_Ver == 15)
                         nHeader_seg = 1;
@@ -300,7 +300,7 @@ for ii = 1:1:nfiles
                     
                     
                     % Version check for the header lines on the data
-                    if any(File_Ver == [16.002 16])
+                    if any(File_Ver == [16.002 16.001 16])
                         nHeader_Data = 4;
                     elseif any(File_Ver == 15 )
                         nHeader_Data = 3;
@@ -759,6 +759,7 @@ for ii = 1:1:nfiles
                                 
                             elseif regexpi(tline, '##DATA TABLE') == 1
                                 % reached the data
+                                disp(tline)
                                 break;
                             end
                             
@@ -781,6 +782,11 @@ for ii = 1:1:nfiles
                                 Field_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Field \(?��0H\) [')));
                             end
                             
+                            % Catch other fonts
+                            if isempty(Field_idx)
+                                Field_idx = find(cellfun(@(x) ~isempty(x), regexpi(header, 'Field \(µ0H\) [')));
+                            end
+                            
                         end
                         
                         if isempty(Moment_idx)
@@ -789,7 +795,7 @@ for ii = 1:1:nfiles
                         end
                         
                         if isempty(Field_idx) || isempty(Moment_idx)
-                            error('Read_Hyst_Files:LakeShore', 'Lake Shore IDEAS VSM format not recognized.');
+                            error('Read_Hyst_Files:LakeShore', 'Lake Shore format not recognized.');
                         end
                         
                         % Get the units
@@ -808,6 +814,8 @@ for ii = 1:1:nfiles
                                 case 'A�m�'
                                     Moment_Units = 'Am2';
                                 case 'A?��m?��'
+                                    Moment_Units = 'Am2';
+                                case 'A m '
                                     Moment_Units = 'Am2';
                                 otherwise
                                     error('Read_Hyst_Files:Lakeshore_Moment', 'Unrecognized moment units: %s.', tmp_units);
