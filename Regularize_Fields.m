@@ -99,7 +99,8 @@ else
     tmp_F1 = Upper_Branch(Upper_Branch(:,1)>0,1);
     tmp_F2 = flipud(-Upper_Branch(Upper_Branch(:,1)<0,1));
     nMin = min([length(tmp_F1), length(tmp_F2)]);
-    mean_Fields = mean([tmp_F1(1:nMin), tmp_F2(1:nMin)],2);
+%     mean_Fields = mean([tmp_F1(1:nMin), tmp_F2(1:nMin)],2);
+    mean_Fields = mean([tmp_F1((length(tmp_F1)-nMin+1):end), tmp_F2((length(tmp_F2)-nMin+1):end)],2);
     
     % Add in the zero field step or lowest absolute field if present, not used,
     % and it doesn't add more data than was measured.
