@@ -389,7 +389,7 @@ for ii = 1:1:nfiles
                         
                     elseif regexpi(tline, 'SAMPLE_MASS')
                         
-                        Mass = strsplit(tline, ',');
+                        Mass = regexpi(tline, ',', 'split');
                         
                         if isempty(Mass{2}) || str2double(Mass{2}) == 0
                             Mass = NaN;
@@ -409,8 +409,8 @@ for ii = 1:1:nfiles
                 Header = fgetl(FID);
                 
                 % Split the header to find the field and moment columns
-                SH = strsplit(Header, ',');
-                
+                SH = regexpi(Header, ',', 'split');
+
                 % TODO - Rewrite this is a more sensible order
                 
                 Field_idx = find(cellfun(@(x) strcmpi(x, 'Field (Oe)'), SH)==1);
@@ -654,7 +654,7 @@ for ii = 1:1:nfiles
                 % Check the moment units and convert to Am2
                 % See if we can split the unit tring again to catch an E-x
                 % scale
-                S2s = strsplit(S2{Unit_idx-1}, ' ');
+                S2s = regexpi(S2{Unit_idx-1}, ' ', 'split');
                 
                 if length(S2s) > 1
                     Moment_Unit = S2s{2};
@@ -726,7 +726,7 @@ for ii = 1:1:nfiles
                                 
                             elseif regexpi(tline, 'Mass:') == 1
                                 
-                                S = strsplit(tline, ' ');
+                                S = regexpi(tline, ' ', 'split');
                                 
                                 if isempty(S{2}) || str2double(S{2}) == 0
                                     Mass = NaN;
@@ -747,8 +747,8 @@ for ii = 1:1:nfiles
                                 end
                                 
                             elseif regexpi(tline, 'Include Initial Curve:') == 1
-                                
-                                S = strsplit(tline, ': ');
+
+                                S = regexpi(tline, ': ', 'split');
                                 
                                 switch S{2}
                                     case {'False', 'false', 'FALSE'}
@@ -759,7 +759,7 @@ for ii = 1:1:nfiles
                                 
                             elseif regexpi(tline, '##DATA TABLE') == 1
                                 % reached the data
-                                disp(tline)
+                                % disp(tline)
                                 break;
                             end
                             
