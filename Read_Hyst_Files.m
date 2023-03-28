@@ -817,6 +817,8 @@ for ii = 1:1:nfiles
                                     Moment_Units = 'Am2';
                                 case 'A m '
                                     Moment_Units = 'Am2';
+                                case 'A·m²'
+                                    Moment_Units = 'Am2';
                                 otherwise
                                     error('Read_Hyst_Files:Lakeshore_Moment', 'Unrecognized moment units: %s.', tmp_units);
                             end
